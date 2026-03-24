@@ -117,6 +117,35 @@
                                 {% endif %}
                             </div>
                         </div>
+
+                        {% if es_propietario %}
+                        <!-- Subida rápida de canciones -->
+                        <div class="col-12">
+                            <div class="card w-100 border-0 shadow-xss rounded-xxl p-4 mb-3">
+                                <div class="d-flex align-items-center mb-3">
+                                    <h4 class="fw-700 font-xss text-grey-900 mb-0">
+                                        <i class="feather-upload text-current me-2"></i>Subir canciones
+                                    </h4>
+                                    <a href="{% url 'agregar_cancion' album.pk %}" class="ms-auto fw-600 font-xssss text-primary">
+                                        <i class="feather-maximize-2 me-1"></i>Vista completa
+                                    </a>
+                                </div>
+                                <form method="post" action="{% url 'agregar_cancion' album.pk %}" enctype="multipart/form-data" id="form-inline-upload">
+                                    {% csrf_token %}
+                                    <div id="inline-drop" class="rounded-xl text-center p-4 mb-3" style="border:2px dashed #ddd;cursor:pointer;transition:all .2s;">
+                                        <i class="feather-upload-cloud text-grey-400" style="font-size:36px;"></i>
+                                        <p class="fw-600 font-xsss text-grey-600 mt-2 mb-1">Arrastra archivos de audio aquí o haz clic</p>
+                                        <span class="font-xsssss text-grey-500">MP3, WAV, OGG, FLAC — Puedes subir varias a la vez</span>
+                                        <input type="file" name="archivos" id="inline-input" multiple accept="audio/*" class="d-none">
+                                    </div>
+                                    <div id="inline-files" class="mb-3" style="display:none;"></div>
+                                    <button type="submit" id="inline-btn" class="btn bg-current text-white fw-600 font-xssss rounded-xl px-4 py-2" disabled>
+                                        <i class="feather-upload me-1"></i>Subir canciones
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
 
 <!-- Audio player oculto -->
@@ -162,6 +191,63 @@
             playing = null;
         }
     });
+})();
+
+// Inline upload en detalle
+(function(){
+    var drop = document.getElementById('inline-drop');
+    var input = document.getElementById('inline-input');
+    var filesDiv = document.getElementById('inline-files');
+    var btn = document.getElementById('inline-btn');
+    if (!drop) return;
+
+    var archivos = [];
+    var audioExts = ['mp3','wav','ogg','flac','aac','m4a','wma'];
+
+    function actualizar() {
+        filesDiv.innerHTML = '';
+        if (!archivos.length) {
+            filesDiv.style.display = 'none';
+            btn.disabled = true;
+            btn.innerHTML = '<i class="feather-upload me-1"></i>Subir canciones';
+            return;
+        }
+        filesDiv.style.display = 'block';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="feather-upload me-1"></i>Subir ' + archivos.length + ' cancion' + (archivos.length!==1?'es':'');
+        archivos.forEach(function(f, i) {
+            var d = document.createElement('div');
+            d.className = 'd-flex align-items-center py-1';
+            d.innerHTML = '<i class="feather-music text-current me-2" style="font-size:14px;"></i>' +
+                '<span class="font-xsss text-grey-900 flex-grow-1">' + f.name + '</span>' +
+                '<span class="font-xsssss text-grey-500 me-2">' + (f.size/1024/1024).toFixed(1) + ' MB</span>' +
+                '<button type="button" class="btn p-0 il-rm" data-i="' + i + '"><i class="feather-x text-grey-400" style="font-size:14px;"></i></button>';
+            filesDiv.appendChild(d);
+        });
+        var dt = new DataTransfer();
+        archivos.forEach(function(f){dt.items.add(f);});
+        input.files = dt.files;
+        document.querySelectorAll('.il-rm').forEach(function(b){
+            b.addEventListener('click',function(){
+                archivos.splice(parseInt(this.dataset.i),1);
+                actualizar();
+            });
+        });
+    }
+
+    function agregar(files) {
+        for(var i=0;i<files.length;i++){
+            var ext=files[i].name.split('.').pop().toLowerCase();
+            if(audioExts.indexOf(ext)!==-1) archivos.push(files[i]);
+        }
+        actualizar();
+    }
+
+    drop.addEventListener('click',function(){input.click();});
+    input.addEventListener('change',function(){agregar(this.files);});
+    drop.addEventListener('dragover',function(e){e.preventDefault();this.style.borderColor='#5271ff';this.style.background='#f0f4ff';});
+    drop.addEventListener('dragleave',function(e){e.preventDefault();this.style.borderColor='#ddd';this.style.background='';});
+    drop.addEventListener('drop',function(e){e.preventDefault();this.style.borderColor='#ddd';this.style.background='';agregar(e.dataTransfer.files);});
 })();
 </script>
 {% endblock %}

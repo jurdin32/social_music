@@ -1,50 +1,268 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Agregar canción - {{ album.titulo }} - Veriffai{% endblock %}
+{% block title %}Agregar canciones - {{ album.titulo }} - Veriffai{% endblock %}
 
 {% block content %}
-                    <div class="row justify-content-center">
-                        <div class="col-lg-8">
-                            <div class="card w-100 border-0 shadow-xss rounded-xxl p-4 mb-3">
-                                <div class="card-body p-0">
-                                    <h2 class="fw-700 font-md text-grey-900 mb-1">
-                                        <i class="feather-plus-circle text-current me-2"></i>Agregar canción
-                                    </h2>
-                                    <p class="font-xsss text-grey-500 mb-4">Álbum: <strong>{{ album.titulo }}</strong></p>
+                    <div class="row">
+                        <!-- Cabecera del álbum -->
+                        <div class="col-12 mb-3">
+                            <div class="card w-100 border-0 shadow-xss rounded-xxl p-4">
+                                <div class="d-flex align-items-center">
+                                    {% if album.portada %}
+                                    <img src="{{ album.portada.url }}" class="rounded-xl me-3" style="width:70px;height:70px;object-fit:cover;">
+                                    {% else %}
+                                    <div class="rounded-xl me-3 d-flex align-items-center justify-content-center bg-grey" style="width:70px;height:70px;">
+                                        <i class="feather-disc text-grey-400" style="font-size:28px;"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <h2 class="fw-700 font-md text-grey-900 mb-0">{{ album.titulo }}</h2>
+                                        <p class="font-xsss text-grey-500 mb-0">
+                                            <span class="badge bg-current text-white font-xsssss fw-600 rounded-xl px-2 py-1 me-2">{{ album.get_genero_display }}</span>
+                                            <i class="feather-music me-1"></i>{{ album.num_canciones }} cancion{{ album.num_canciones|pluralize:"es" }}
+                                        </p>
+                                    </div>
+                                    <a href="{% url 'detalle_album' album.pk %}" class="ms-auto btn bg-grey text-grey-700 fw-600 font-xssss rounded-xl px-3 py-2">
+                                        <i class="feather-arrow-left me-1"></i>Volver al álbum
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
 
+                        <!-- Subida rápida múltiple -->
+                        <div class="col-lg-7">
+                            <div class="card w-100 border-0 shadow-xss rounded-xxl p-4 mb-3">
+                                <h4 class="fw-700 font-xss text-grey-900 mb-3">
+                                    <i class="feather-upload text-current me-2"></i>Subir canciones
+                                </h4>
+
+                                <form method="post" enctype="multipart/form-data" id="form-multi">
+                                    {% csrf_token %}
+                                    <!-- Zona de arrastrar -->
+                                    <div id="drop-zone" class="rounded-xl text-center p-5 mb-3" style="border:2px dashed #ddd;cursor:pointer;transition:all .2s;">
+                                        <i class="feather-upload-cloud text-grey-400" style="font-size:48px;" id="drop-icon"></i>
+                                        <p class="fw-600 font-xsss text-grey-700 mt-3 mb-1">Arrastra tus archivos de audio aquí</p>
+                                        <p class="font-xsssss text-grey-500 mb-2">o haz clic para seleccionar</p>
+                                        <span class="badge bg-light text-grey-600 font-xsssss px-3 py-1">MP3, WAV, OGG, FLAC</span>
+                                        <input type="file" name="archivos" id="input-archivos" multiple accept="audio/*" class="d-none">
+                                    </div>
+
+                                    <!-- Lista de archivos seleccionados -->
+                                    <div id="archivos-lista" class="mb-3" style="display:none;">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <h5 class="fw-700 font-xsss text-grey-900 mb-0">Archivos seleccionados</h5>
+                                            <button type="button" id="btn-limpiar" class="ms-auto btn p-0 font-xsssss fw-600 text-danger">
+                                                <i class="feather-x me-1"></i>Limpiar todo
+                                            </button>
+                                        </div>
+                                        <div id="archivos-items"></div>
+                                    </div>
+
+                                    <button type="submit" id="btn-subir" class="btn bg-current text-white fw-600 font-xssss rounded-xl px-4 py-2 w-100" disabled>
+                                        <i class="feather-upload me-1"></i>Subir <span id="count-text">canciones</span>
+                                    </button>
+                                </form>
+
+                                <hr class="my-4">
+
+                                <!-- Formulario individual -->
+                                <div class="mb-2">
+                                    <a class="fw-600 font-xsss text-grey-700" data-bs-toggle="collapse" href="#form-individual" role="button" aria-expanded="false">
+                                        <i class="feather-plus-circle text-current me-1"></i>Agregar canción individual con detalles
+                                    </a>
+                                </div>
+                                <div class="collapse" id="form-individual">
                                     <form method="post" enctype="multipart/form-data">
                                         {% csrf_token %}
-
                                         <div class="form-group mb-3">
                                             <label class="fw-600 font-xsss text-grey-900 mb-2">{{ form.titulo.label }}</label>
                                             {{ form.titulo }}
                                             {% if form.titulo.errors %}<small class="text-danger font-xsssss">{{ form.titulo.errors|join:", " }}</small>{% endif %}
                                         </div>
-
                                         <div class="form-group mb-3">
                                             <label class="fw-600 font-xsss text-grey-900 mb-2">{{ form.archivo.label }}</label>
                                             {{ form.archivo }}
                                             {% if form.archivo.errors %}<small class="text-danger font-xsssss">{{ form.archivo.errors|join:", " }}</small>{% endif %}
-                                            <small class="text-grey-500 font-xsssss d-block mt-1">Formatos aceptados: MP3, WAV, OGG, FLAC</small>
                                         </div>
-
-                                        <div class="form-group mb-4">
+                                        <div class="form-group mb-3">
                                             <label class="fw-600 font-xsss text-grey-900 mb-2">{{ form.numero.label }}</label>
                                             {{ form.numero }}
-                                            {% if form.numero.errors %}<small class="text-danger font-xsssss">{{ form.numero.errors|join:", " }}</small>{% endif %}
-                                            <small class="text-grey-500 font-xsssss d-block mt-1">Posición de la canción en el álbum</small>
                                         </div>
-
-                                        <div class="d-flex gap-2">
-                                            <button type="submit" class="btn bg-current text-white fw-600 font-xssss rounded-xl px-4 py-2">
-                                                <i class="feather-upload me-1"></i>Subir canción
-                                            </button>
-                                            <a href="{% url 'detalle_album' album.pk %}" class="btn bg-grey text-grey-700 fw-600 font-xssss rounded-xl px-4 py-2">Cancelar</a>
-                                        </div>
+                                        <button type="submit" class="btn bg-success text-white fw-600 font-xssss rounded-xl px-4 py-2">
+                                            <i class="feather-plus me-1"></i>Agregar canción
+                                        </button>
                                     </form>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Canciones actuales del álbum -->
+                        <div class="col-lg-5">
+                            <div class="card w-100 border-0 shadow-xss rounded-xxl p-4 mb-3">
+                                <h4 class="fw-700 font-xss text-grey-900 mb-3">
+                                    <i class="feather-list me-2"></i>Canciones del álbum
+                                    <span class="badge bg-current text-white font-xsssss rounded-pill ms-2">{{ canciones|length }}</span>
+                                </h4>
+
+                                {% if canciones %}
+                                {% for cancion in canciones %}
+                                <div class="d-flex align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                                    <span class="fw-700 font-xsss text-grey-400 me-3" style="min-width:24px;">{{ cancion.numero }}</span>
+                                    <div class="flex-grow-1">
+                                        <h5 class="fw-600 font-xsss text-grey-900 mb-0">{{ cancion.titulo }}</h5>
+                                        <span class="font-xsssss text-grey-500">
+                                            {% if cancion.duracion %}{{ cancion.duracion_formato }}{% else %}--:--{% endif %}
+                                        </span>
+                                    </div>
+                                    {% if cancion.archivo %}
+                                    <button class="btn p-0 me-2 btn-play" data-src="{{ cancion.archivo.url }}" title="Reproducir">
+                                        <i class="feather-play-circle text-current" style="font-size:20px;"></i>
+                                    </button>
+                                    {% endif %}
+                                    <form method="post" action="{% url 'eliminar_cancion' cancion.pk %}" class="d-inline" onsubmit="return confirm('¿Eliminar esta canción?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn p-0" title="Eliminar"><i class="feather-trash-2 text-danger" style="font-size:16px;"></i></button>
+                                    </form>
+                                </div>
+                                {% endfor %}
+                                {% else %}
+                                <div class="text-center py-4">
+                                    <i class="feather-music text-grey-300" style="font-size:36px;"></i>
+                                    <p class="font-xsss text-grey-500 mt-2 mb-0">Aún no hay canciones</p>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            {% if canciones %}
+                            <a href="{% url 'detalle_album' album.pk %}" class="btn bg-current text-white fw-600 font-xssss rounded-xl px-4 py-2 w-100">
+                                <i class="feather-check me-1"></i>Listo, ver álbum completo
+                            </a>
+                            {% endif %}
+                        </div>
                     </div>
+
+<!-- Audio player -->
+<audio id="audio-player" preload="none"></audio>
+
+<script>
+(function(){
+    var dropZone = document.getElementById('drop-zone');
+    var inputArchivos = document.getElementById('input-archivos');
+    var listaDiv = document.getElementById('archivos-lista');
+    var itemsDiv = document.getElementById('archivos-items');
+    var btnSubir = document.getElementById('btn-subir');
+    var btnLimpiar = document.getElementById('btn-limpiar');
+    var countText = document.getElementById('count-text');
+    var archivosSeleccionados = [];
+
+    function actualizarLista() {
+        itemsDiv.innerHTML = '';
+        if (archivosSeleccionados.length === 0) {
+            listaDiv.style.display = 'none';
+            btnSubir.disabled = true;
+            countText.textContent = 'canciones';
+            return;
+        }
+        listaDiv.style.display = 'block';
+        btnSubir.disabled = false;
+        countText.textContent = archivosSeleccionados.length + ' cancion' + (archivosSeleccionados.length !== 1 ? 'es' : '');
+
+        archivosSeleccionados.forEach(function(f, idx) {
+            var item = document.createElement('div');
+            item.className = 'd-flex align-items-center py-2 border-bottom';
+            var tamano = (f.size / 1024 / 1024).toFixed(1);
+            item.innerHTML = '<i class="feather-music text-current me-2"></i>' +
+                '<div class="flex-grow-1"><span class="fw-600 font-xsss text-grey-900">' + f.name + '</span>' +
+                '<span class="font-xsssss text-grey-500 ms-2">' + tamano + ' MB</span></div>' +
+                '<button type="button" class="btn p-0 btn-quitar" data-idx="' + idx + '">' +
+                '<i class="feather-x-circle text-grey-400" style="font-size:16px;"></i></button>';
+            itemsDiv.appendChild(item);
+        });
+
+        // Actualizar input de archivos con DataTransfer
+        var dt = new DataTransfer();
+        archivosSeleccionados.forEach(function(f) { dt.items.add(f); });
+        inputArchivos.files = dt.files;
+
+        document.querySelectorAll('.btn-quitar').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                archivosSeleccionados.splice(parseInt(this.dataset.idx), 1);
+                actualizarLista();
+            });
+        });
+    }
+
+    function agregarArchivos(files) {
+        var audioExts = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma'];
+        for (var i = 0; i < files.length; i++) {
+            var ext = files[i].name.split('.').pop().toLowerCase();
+            if (audioExts.indexOf(ext) !== -1) {
+                archivosSeleccionados.push(files[i]);
+            }
+        }
+        actualizarLista();
+    }
+
+    dropZone.addEventListener('click', function() { inputArchivos.click(); });
+    inputArchivos.addEventListener('change', function() {
+        agregarArchivos(this.files);
+    });
+
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#5271ff';
+        this.style.background = '#f0f4ff';
+    });
+    dropZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#ddd';
+        this.style.background = '';
+    });
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#ddd';
+        this.style.background = '';
+        agregarArchivos(e.dataTransfer.files);
+    });
+
+    btnLimpiar.addEventListener('click', function() {
+        archivosSeleccionados = [];
+        actualizarLista();
+    });
+
+    // Audio player
+    var audio = document.getElementById('audio-player');
+    var playing = null;
+    document.querySelectorAll('.btn-play').forEach(function(btn){
+        btn.addEventListener('click', function(){
+            var src = this.getAttribute('data-src');
+            var icon = this.querySelector('i');
+            if (playing === this) {
+                audio.pause();
+                icon.classList.remove('feather-pause-circle');
+                icon.classList.add('feather-play-circle');
+                playing = null;
+                return;
+            }
+            if (playing) {
+                playing.querySelector('i').classList.remove('feather-pause-circle');
+                playing.querySelector('i').classList.add('feather-play-circle');
+            }
+            audio.src = src;
+            audio.play();
+            icon.classList.remove('feather-play-circle');
+            icon.classList.add('feather-pause-circle');
+            playing = this;
+        });
+    });
+    audio.addEventListener('ended', function(){
+        if (playing) {
+            playing.querySelector('i').classList.remove('feather-pause-circle');
+            playing.querySelector('i').classList.add('feather-play-circle');
+            playing = null;
+        }
+    });
+})();
+</script>
 {% endblock %}

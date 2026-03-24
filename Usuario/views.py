@@ -112,7 +112,7 @@ def pagina_usuario(request, username):
     return render(request, 'user-page.html', contexto)
 
 
-# ── Álbumes ───────────────────────────────────────────────────────────────
+# aqui el registro de canciones y albumes 
 
 @login_required
 def mis_albumes(request):
@@ -135,7 +135,7 @@ def crear_album(request):
             album = form.save(commit=False)
             album.artista = request.user
             album.save()
-            return redirect('detalle_album', album_id=album.pk)
+            return redirect('agregar_cancion', album_id=album.pk)
     else:
         form = AlbumForm()
     contexto = {
@@ -183,13 +183,16 @@ def detalle_album(request, album_id):
     perfil_obj = None
     if request.user.is_authenticated:
         perfil_obj, _ = Perfil.objects.get_or_create(usuario=request.user)
+    es_propietario = request.user.is_authenticated and request.user == album.artista
+    cancion_form = CancionForm(initial={'numero': album.canciones.count() + 1}) if es_propietario else None
     contexto = {
         'user': request.user,
         'perfil': perfil_obj,
         'album': album,
         'canciones': album.canciones.all(),
         'perfil_artista': perfil_artista,
-        'es_propio': request.user.is_authenticated and request.user == album.artista,
+        'es_propietario': es_propietario,
+        'cancion_form': cancion_form,
     }
     return render(request, 'albumes/detalle_album.html', contexto)
 
@@ -198,29 +201,50 @@ def detalle_album(request, album_id):
 def agregar_cancion(request, album_id):
     album = get_object_or_404(Album, pk=album_id, artista=request.user)
     if request.method == 'POST':
-        form = CancionForm(request.POST, request.FILES)
-        if form.is_valid():
-            cancion = form.save(commit=False)
-            cancion.album = album
-            # Auto-calcular duración del archivo de audio
-            try:
-                from mutagen import File as MutagenFile
-                audio = MutagenFile(cancion.archivo)
-                if audio and audio.info:
-                    cancion.duracion = int(audio.info.length)
-            except Exception:
-                pass
-            cancion.save()
+        archivos = request.FILES.getlist('archivos')
+        if archivos:
+            siguiente = album.canciones.count() + 1
+            for i, archivo in enumerate(archivos):
+                titulo = archivo.name.rsplit('.', 1)[0].replace('_', ' ').replace('-', ' ').title()
+                cancion = Cancion(
+                    album=album,
+                    titulo=titulo,
+                    archivo=archivo,
+                    numero=siguiente + i,
+                )
+                try:
+                    from mutagen import File as MutagenFile
+                    audio = MutagenFile(archivo)
+                    if audio and audio.info:
+                        cancion.duracion = int(audio.info.length)
+                except Exception:
+                    pass
+                cancion.save()
             return redirect('detalle_album', album_id=album.pk)
+        else:
+            form = CancionForm(request.POST, request.FILES)
+            if form.is_valid():
+                cancion = form.save(commit=False)
+                cancion.album = album
+                try:
+                    from mutagen import File as MutagenFile
+                    audio = MutagenFile(cancion.archivo)
+                    if audio and audio.info:
+                        cancion.duracion = int(audio.info.length)
+                except Exception:
+                    pass
+                cancion.save()
+                return redirect('detalle_album', album_id=album.pk)
     else:
-        siguiente = album.canciones.count() + 1
-        form = CancionForm(initial={'numero': siguiente})
+        form = CancionForm(initial={'numero': album.canciones.count() + 1})
     perfil_obj, _ = Perfil.objects.get_or_create(usuario=request.user)
+    canciones_actuales = album.canciones.all()
     contexto = {
         'user': request.user,
         'perfil': perfil_obj,
         'form': form,
         'album': album,
+        'canciones': canciones_actuales,
     }
     return render(request, 'albumes/agregar_cancion.html', contexto)
 
