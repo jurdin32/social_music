@@ -212,28 +212,38 @@ def agregar_cancion(request, album_id):
                     archivo=archivo,
                     numero=siguiente + i,
                 )
+                cancion.save()
                 try:
                     from mutagen import File as MutagenFile
-                    audio = MutagenFile(archivo)
+                    audio = MutagenFile(cancion.archivo.path)
                     if audio and audio.info:
                         cancion.duracion = int(audio.info.length)
+                    else:
+                        from mutagen.mp3 import MP3
+                        audio = MP3(cancion.archivo.path)
+                        cancion.duracion = int(audio.info.length)
+                    cancion.save(update_fields=['duracion'])
                 except Exception:
                     pass
-                cancion.save()
             return redirect('detalle_album', album_id=album.pk)
         else:
             form = CancionForm(request.POST, request.FILES)
             if form.is_valid():
                 cancion = form.save(commit=False)
                 cancion.album = album
+                cancion.save()
                 try:
                     from mutagen import File as MutagenFile
-                    audio = MutagenFile(cancion.archivo)
+                    audio = MutagenFile(cancion.archivo.path)
                     if audio and audio.info:
                         cancion.duracion = int(audio.info.length)
+                    else:
+                        from mutagen.mp3 import MP3
+                        audio = MP3(cancion.archivo.path)
+                        cancion.duracion = int(audio.info.length)
+                    cancion.save(update_fields=['duracion'])
                 except Exception:
                     pass
-                cancion.save()
                 return redirect('detalle_album', album_id=album.pk)
     else:
         form = CancionForm(initial={'numero': album.canciones.count() + 1})

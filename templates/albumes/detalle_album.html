@@ -9,11 +9,11 @@
                         <div class="col-12 mb-4">
                             <div class="card w-100 border-0 shadow-xss rounded-xxl overflow-hidden">
                                 <div class="row g-0">
-                                    <div class="col-md-4 col-lg-3">
+                                    <div class="col-md-4 col-lg-3 position-relative" style="min-height:280px;">
                                         {% if album.portada %}
-                                        <img src="{{ album.portada.url }}" class="w-100 h-100" style="object-fit:cover;min-height:280px;">
+                                        <img src="{{ album.portada.url }}" class="position-absolute top-0 start-0 w-100 h-100" style="object-fit:cover;">
                                         {% else %}
-                                        <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-grey" style="min-height:280px;">
+                                        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-greylight">
                                             <i class="feather-disc text-grey-400" style="font-size:80px;"></i>
                                         </div>
                                         {% endif %}

@@ -25,9 +25,9 @@
                                 <a href="{% url 'detalle_album' album.pk %}">
                                     <div class="position-relative">
                                         {% if album.portada %}
-                                        <img src="{{ album.portada.url }}" alt="{{ album.titulo }}" class="w-100" style="height:220px;object-fit:cover;">
+                                        <img src="{{ album.portada.url }}" alt="{{ album.titulo }}" class="w-100" style="aspect-ratio:1;object-fit:cover;">
                                         {% else %}
-                                        <div class="w-100 d-flex align-items-center justify-content-center bg-greylight" style="height:220px;">
+                                        <div class="w-100 d-flex align-items-center justify-content-center bg-greylight" style="aspect-ratio:1;">
                                             <i class="feather-music text-grey-500" style="font-size:60px;"></i>
                                         </div>
                                         {% endif %}

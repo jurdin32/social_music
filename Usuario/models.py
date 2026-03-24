@@ -156,10 +156,12 @@ class Album(models.Model):
         if self.portada:
             try:
                 img = Image.open(self.portada.path)
-                if img.width != PORTADA_ALBUM_SIZE[0] or img.height != PORTADA_ALBUM_SIZE[1]:
-                    img_proc = _recortar_centrado(img, *PORTADA_ALBUM_SIZE)
+                img = img.convert('RGB')
+                max_dim = max(PORTADA_ALBUM_SIZE)
+                if img.width > max_dim or img.height > max_dim:
+                    img.thumbnail(PORTADA_ALBUM_SIZE, Image.LANCZOS)
                     buffer = BytesIO()
-                    img_proc.save(buffer, format='JPEG', quality=90)
+                    img.save(buffer, format='JPEG', quality=90)
                     self.portada.save(self.portada.name, ContentFile(buffer.getvalue()), save=False)
                     Album.objects.filter(pk=self.pk).update(portada=self.portada.name)
             except Exception:
