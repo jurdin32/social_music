@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar Perfil - Sociala{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card w-100 shadow-xss rounded-xxl border-0 mb-3 mt-3 overflow-hidden">
+            <!-- Portada -->
+            <div id="preview-portada-bg" class="card-body position-relative h240 bg-image-cover bg-image-center"
+                 style="background-image: url({% if perfil.portada %}{{ perfil.portada.url }}{% else %}{% static 'sociala/images/bb-9.jpg' %}{% endif %});"></div>
+            <!-- Foto y nombre -->
+            <div class="card-body d-block pt-4 text-center">
+                <figure class="avatar mt--6 position-relative w75 z-index-1 w100 ms-auto me-auto">
+                    <img id="preview-foto"
+                         src="{% if perfil.foto %}{{ perfil.foto.url }}{% elif perfil.get_foto %}{{ perfil.get_foto }}{% else %}{% static 'sociala/images/pt-1.jpg' %}{% endif %}"
+                         alt="Foto de perfil" class="p-1 bg-white rounded-xl w-100">
+                </figure>
+                <h4 class="font-xs ls-1 fw-700 text-grey-900 mt-2">{{ perfil.nombre_completo }}</h4>
+                <p class="font-xssss text-grey-500">{{ user.email }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="col-xl-12">
+        <div class="card w-100 shadow-xss rounded-xxl border-0 p-4 mb-3">
+            <h4 class="fw-700 font-xss text-grey-900 mb-4">Editar Perfil</h4>
+
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+
+                <!-- Nombre y Apellido -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="fw-600 font-xssss text-grey-700 mb-1">{{ form.first_name.label }}</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                        <div class="text-danger font-xssss mt-1">{{ form.first_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="fw-600 font-xssss text-grey-700 mb-1">{{ form.last_name.label }}</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                        <div class="text-danger font-xssss mt-1">{{ form.last_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Foto de perfil -->
+                <div class="mb-3">
+                    <label class="fw-600 font-xssss text-grey-700 mb-1">{{ form.foto.label }}</label>
+                    <div class="mb-2">
+                        <img id="preview-foto-small" src="{% if perfil.foto %}{{ perfil.foto.url }}{% elif perfil.get_foto %}{{ perfil.get_foto }}{% else %}{% static 'sociala/images/pt-1.jpg' %}{% endif %}"
+                             alt="Vista previa" class="rounded-xl border" style="width:80px;height:80px;object-fit:cover;">
+                        <span class="font-xssss text-grey-500 ms-2">Vista previa actual</span>
+                    </div>
+                    {{ form.foto }}
+                    <div class="font-xssss text-grey-500 mt-1">Tamaño recomendado: <strong>300 × 300 px</strong>. Se recortará y redimensionará automáticamente al cuadrado.</div>
+                    {% if form.foto.errors %}
+                    <div class="text-danger font-xssss mt-1">{{ form.foto.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Foto de portada -->
+                <div class="mb-3">
+                    <label class="fw-600 font-xssss text-grey-700 mb-1">{{ form.portada.label }}</label>
+                    <div class="mb-2">
+                        <img id="preview-portada-small" src="{% if perfil.portada %}{{ perfil.portada.url }}{% else %}{% static 'sociala/images/bb-9.jpg' %}{% endif %}"
+                             alt="Vista previa portada" class="rounded-xl border w-100" style="max-height:100px;object-fit:cover;">
+                        <span class="font-xssss text-grey-500">Vista previa actual</span>
+                    </div>
+                    {{ form.portada }}
+                    <div class="font-xssss text-grey-500 mt-1">Tamaño recomendado: <strong>1200 × 400 px</strong>. Se recortará y redimensionará automáticamente (banner horizontal).</div>
+                    {% if form.portada.errors %}
+                    <div class="text-danger font-xssss mt-1">{{ form.portada.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Biografía -->
+                <div class="mb-3">
+                    <label class="fw-600 font-xssss text-grey-700 mb-1">{{ form.bio.label }}</label>
+                    {{ form.bio }}
+                    {% if form.bio.errors %}
+                    <div class="text-danger font-xssss mt-1">{{ form.bio.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Ubicación y Ocupación -->
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="fw-600 font-xssss text-grey-700 mb-1">{{ form.ubicacion.label }}</label>
+                        {{ form.ubicacion }}
+                        {% if form.ubicacion.errors %}
+                        <div class="text-danger font-xssss mt-1">{{ form.ubicacion.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="fw-600 font-xssss text-grey-700 mb-1">{{ form.ocupacion.label }}</label>
+                        {{ form.ocupacion }}
+                        {% if form.ocupacion.errors %}
+                        <div class="text-danger font-xssss mt-1">{{ form.ocupacion.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Sitio web -->
+                <div class="mb-3">
+                    <label class="fw-600 font-xssss text-grey-700 mb-1">{{ form.sitio_web.label }}</label>
+                    {{ form.sitio_web }}
+                    {% if form.sitio_web.errors %}
+                    <div class="text-danger font-xssss mt-1">{{ form.sitio_web.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <!-- Perfil privado -->
+                <div class="mb-4 d-flex align-items-center">
+                    {{ form.es_privado }}
+                    <label class="fw-600 font-xssss text-grey-700 ms-2">{{ form.es_privado.label }}</label>
+                </div>
+
+                <!-- Botones -->
+                <div class="d-flex gap-3">
+                    <button type="submit" class="bg-primary border-0 text-white fw-600 text-uppercase font-xssss float-left rounded-3 mt-0 btn-fluid p-3 lh-2 text-center ls-3 d-inline-block">
+                        Guardar cambios
+                    </button>
+                    <a href="{% url 'perfil' %}" class="bg-greylight border-0 text-grey-700 fw-600 text-uppercase font-xssss float-left rounded-3 mt-0 btn-fluid p-3 lh-2 text-center ls-3 d-inline-block text-decoration-none">
+                        Cancelar
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    function previewImage(inputId, previewIds, bgId) {
+        var input = document.getElementById(inputId);
+        if (!input) return;
+        input.addEventListener('change', function () {
+            if (!this.files || !this.files[0]) return;
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                previewIds.forEach(function (id) {
+                    var el = document.getElementById(id);
+                    if (el) el.src = e.target.result;
+                });
+                if (bgId) {
+                    var bg = document.getElementById(bgId);
+                    if (bg) bg.style.backgroundImage = 'url(' + e.target.result + ')';
+                }
+            };
+            reader.readAsDataURL(this.files[0]);
+        });
+    }
+
+    // El input generado por Django tiene el id = id_<nombre_campo>
+    previewImage('id_foto',    ['preview-foto', 'preview-foto-small'], null);
+    previewImage('id_portada', ['preview-portada-small'], 'preview-portada-bg');
+})();
+</script>
+{% endblock %}

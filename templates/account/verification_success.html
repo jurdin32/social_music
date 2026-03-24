@@ -1,0 +1,129 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Veriffai - Verificación exitosa</title>
+    <link rel="stylesheet" href="{% static 'sociala/css/themify-icons.css' %}">
+    <link rel="stylesheet" href="{% static 'sociala/css/feather.css' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'sociala/images/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'sociala/css/style.css' %}">
+    <style>
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            animation: popIn 0.5s ease;
+        }
+        .success-icon i {
+            font-size: 48px;
+            color: #fff;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.15); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .progress-bar-custom {
+            height: 6px;
+            border-radius: 3px;
+            background: #e9ecef;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            border-radius: 3px;
+            animation: fillBar 5s linear forwards;
+        }
+        @keyframes fillBar {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+        .countdown-text {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+</head>
+
+<body class="color-theme-blue">
+
+    <div class="preloader"></div>
+
+    <div class="main-wrap">
+
+        <div class="row m-0" style="min-height:100vh;">
+
+            <div class="col-xl-5 d-none d-xl-flex p-0 bg-image-cover bg-no-repeat align-items-end"
+                style="background-image: url({% static 'sociala/images/login-bg.jpg' %});">
+                <div class="p-4">
+                    <a href="/"><img src="/static/veriffAi.png" alt="VeriffAi" style="height:48px;"></a>
+                </div>
+            </div>
+
+            <div class="col-xl-7 col-12 d-flex align-items-center justify-content-center bg-white p-5">
+                <div class="w-100" style="max-width:420px;">
+
+                    <div class="d-block d-xl-none mb-4 text-center">
+                        <a href="/"><img src="/static/veriffAi.png" alt="VeriffAi" style="height:40px;"></a>
+                    </div>
+
+                    <div class="success-icon">
+                        <i class="feather-check"></i>
+                    </div>
+
+                    <h2 class="fw-700 display1-size display2-md-size mb-3 text-center">¡Verificación exitosa!</h2>
+
+                    <p class="font-xsss text-grey-500 fw-500 mb-2 lh-26 text-center">
+                        Tu correo electrónico ha sido verificado correctamente. Tu cuenta está activa.
+                    </p>
+
+                    <p class="font-xsss text-grey-500 fw-500 mb-4 lh-26 text-center">
+                        Serás redirigido a tu panel de usuario en <strong class="countdown-text" id="countdown">5</strong> segundos...
+                    </p>
+
+                    <div class="progress-bar-custom">
+                        <div class="progress-bar-fill"></div>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <a href="/inicio/"
+                            class="form-control text-center style2-input text-white fw-600 bg-dark border-0 p-0 d-flex align-items-center justify-content-center"
+                            style="text-decoration:none; height:50px;">
+                            Ir a mi panel ahora
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="{% static 'sociala/js/plugin.js' %}"></script>
+    <script src="{% static 'sociala/js/scripts.js' %}"></script>
+    <script>
+    (function() {
+        var seconds = 5;
+        var el = document.getElementById('countdown');
+        var timer = setInterval(function() {
+            seconds--;
+            if (el) el.textContent = seconds;
+            if (seconds <= 0) {
+                clearInterval(timer);
+                window.location.href = '/inicio/';
+            }
+        }, 1000);
+    })();
+    </script>
+</body>
+</html>

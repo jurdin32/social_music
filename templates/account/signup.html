@@ -1,0 +1,137 @@
+{% load static %}
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Veriffai - Crear cuenta</title>
+    <link rel="stylesheet" href="{% static 'sociala/css/themify-icons.css' %}">
+    <link rel="stylesheet" href="{% static 'sociala/css/feather.css' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'sociala/images/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'sociala/css/style.css' %}">
+</head>
+
+<body class="color-theme-blue">
+
+    <div class="preloader"></div>
+
+    <div class="main-wrap">
+
+        <div class="row m-0" style="min-height:100vh;">
+
+            <!-- Panel izquierdo: imagen de fondo (solo xl) -->
+            <div class="col-xl-5 d-none d-xl-flex p-0 bg-image-cover bg-no-repeat align-items-end"
+                style="background-image: url({% static 'sociala/images/login-bg.jpg' %});">
+                <div class="p-4">
+                    <a href="/"><img src="/static/veriffAi.png" alt="VeriffAi" style="height:48px;"></a>
+                </div>
+            </div>
+
+            <!-- Panel derecho: formulario -->
+            <div class="col-xl-7 col-12 d-flex align-items-center justify-content-center bg-white p-5">
+                <div class="w-100" style="max-width:420px;">
+
+                    <!-- Logo visible solo en mobile -->
+                    <div class="d-block d-xl-none mb-4 text-center">
+                        <a href="/"><img src="/static/veriffAi.png" alt="VeriffAi" style="height:40px;"></a>
+                    </div>
+
+                    <h2 class="fw-700 display1-size display2-md-size mb-1">Crea tu cuenta</h2>
+                    <p class="font-xsss text-grey-500 fw-500 mb-4">Únete a la comunidad</p>
+
+                    {% if messages %}
+                    <div class="mb-3">
+                        {% for message in messages %}
+                        <p class="font-xsss text-danger fw-500 mt-0 mb-2 lh-26">
+                            <i class="feather-alert-circle me-1"></i>{{ message }}
+                        </p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Registro con Google -->
+                    <div class="form-group mb-3">
+                        <a href="{% provider_login_url 'google' %}"
+                            class="form-control text-left style2-input text-white fw-600 bg-facebook border-0 p-0 d-flex align-items-center">
+                            <img src="{% static 'sociala/images/icon-1.png' %}" alt="Google" class="ms-2 w40 mb-1 me-4">
+                            Registrarse con Google
+                        </a>
+                    </div>
+
+                    <!-- Divisor -->
+                    <div class="d-flex align-items-center mb-3 gap-2">
+                        <hr class="flex-grow-1 m-0">
+                        <span class="font-xsss text-grey-500 fw-500 px-2">o regístrate con tu correo</span>
+                        <hr class="flex-grow-1 m-0">
+                    </div>
+
+                    <!-- Formulario de registro por correo -->
+                    <form method="POST" action="{% url 'account_signup' %}">
+                        {% csrf_token %}
+
+                        <!-- Email -->
+                        <div class="form-group icon-input mb-3">
+                            <i class="font-sm ti-email text-grey-500 pe-0"></i>
+                            <input type="email" name="email" id="{{ form.email.id_for_label }}"
+                                class="style2-input ps-5 form-control text-grey-900 font-xsss fw-600"
+                                placeholder="Correo electrónico"
+                                value="{{ form.email.value|default:'' }}"
+                                autofocus>
+                            {% if form.email.errors %}
+                            <small class="text-danger font-xsss">{{ form.email.errors|join:", " }}</small>
+                            {% endif %}
+                        </div>
+
+                        <!-- Contraseña -->
+                        <div class="form-group icon-input mb-3">
+                            <input type="password" name="password1" id="{{ form.password1.id_for_label }}"
+                                class="style2-input ps-5 form-control text-grey-900 font-xss ls-3"
+                                placeholder="Contraseña">
+                            <i class="font-sm ti-lock text-grey-500 pe-0"></i>
+                            {% if form.password1.errors %}
+                            <small class="text-danger font-xsss">{{ form.password1.errors|join:", " }}</small>
+                            {% endif %}
+                        </div>
+
+                        <!-- Confirmar contraseña -->
+                        <div class="form-group icon-input mb-3">
+                            <input type="password" name="password2" id="{{ form.password2.id_for_label }}"
+                                class="style2-input ps-5 form-control text-grey-900 font-xss ls-3"
+                                placeholder="Confirmar contraseña">
+                            <i class="font-sm ti-lock text-grey-500 pe-0"></i>
+                            {% if form.password2.errors %}
+                            <small class="text-danger font-xsss">{{ form.password2.errors|join:", " }}</small>
+                            {% endif %}
+                        </div>
+
+                        {% if form.non_field_errors %}
+                        <div class="mb-2">
+                            <small class="text-danger font-xsss">{{ form.non_field_errors|join:", " }}</small>
+                        </div>
+                        {% endif %}
+
+                        <div class="form-group mb-1">
+                            <button type="submit"
+                                class="form-control text-center style2-input text-white fw-600 bg-dark border-0 p-0">
+                                Crear cuenta
+                            </button>
+                        </div>
+                    </form>
+
+                    <h6 class="text-grey-500 font-xsss fw-500 mt-3 mb-0 lh-32">
+                        ¿Ya tienes cuenta? <a href="{% url 'account_login' %}" class="fw-700 ms-1">Inicia sesión</a>
+                    </h6>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="{% static 'sociala/js/plugin.js' %}"></script>
+    <script src="{% static 'sociala/js/scripts.js' %}"></script>
+</body>
+</html>

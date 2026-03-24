@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ album.titulo }} - Veriffai{% endblock %}
+
+{% block content %}
+                    <div class="row">
+                        <!-- Cabecera del álbum -->
+                        <div class="col-12 mb-4">
+                            <div class="card w-100 border-0 shadow-xss rounded-xxl overflow-hidden">
+                                <div class="row g-0">
+                                    <div class="col-md-4 col-lg-3">
+                                        {% if album.portada %}
+                                        <img src="{{ album.portada.url }}" class="w-100 h-100" style="object-fit:cover;min-height:280px;">
+                                        {% else %}
+                                        <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-grey" style="min-height:280px;">
+                                            <i class="feather-disc text-grey-400" style="font-size:80px;"></i>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-8 col-lg-9 d-flex flex-column justify-content-center p-4">
+                                        <span class="badge bg-current text-white font-xsssss fw-600 rounded-xl px-3 py-1 mb-2" style="width:fit-content;">{{ album.get_genero_display }}</span>
+                                        <h1 class="fw-700 font-xl text-grey-900 mb-1">{{ album.titulo }}</h1>
+                                        <p class="font-xsss text-grey-500 mb-2">
+                                            <i class="feather-user me-1"></i>{{ album.artista.get_full_name|default:album.artista.username }}
+                                            {% if album.fecha_lanzamiento %}
+                                            <span class="ms-3"><i class="feather-calendar me-1"></i>{{ album.fecha_lanzamiento }}</span>
+                                            {% endif %}
+                                        </p>
+                                        <p class="font-xsss text-grey-500 mb-3">
+                                            <i class="feather-music me-1"></i>{{ album.num_canciones }} cancion{{ album.num_canciones|pluralize:"es" }}
+                                            {% if album.duracion_total %}
+                                            <span class="ms-3"><i class="feather-clock me-1"></i>{{ album.duracion_total }} seg.</span>
+                                            {% endif %}
+                                        </p>
+                                        {% if album.descripcion %}
+                                        <p class="font-xsss text-grey-600 mb-3">{{ album.descripcion }}</p>
+                                        {% endif %}
+
+                                        {% if es_propietario %}
+                                        <div class="d-flex gap-2 flex-wrap">
+                                            <a href="{% url 'editar_album' album.pk %}" class="btn bg-current text-white fw-600 font-xssss rounded-xl px-3 py-2">
+                                                <i class="feather-edit me-1"></i>Editar
+                                            </a>
+                                            <a href="{% url 'agregar_cancion' album.pk %}" class="btn bg-success text-white fw-600 font-xssss rounded-xl px-3 py-2">
+                                                <i class="feather-plus me-1"></i>Agregar canción
+                                            </a>
+                                        </div>
+                                        {% endif %}
+
+                                        {% if not album.es_publico %}
+                                        <span class="badge bg-warning text-dark font-xsssss fw-600 rounded-xl px-3 py-1 mt-2" style="width:fit-content;">
+                                            <i class="feather-lock me-1"></i>Privado
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Lista de canciones -->
+                        <div class="col-12">
+                            <div class="card w-100 border-0 shadow-xss rounded-xxl p-4 mb-3">
+                                <h4 class="fw-700 font-xss text-grey-900 mb-3">
+                                    <i class="feather-list me-2"></i>Canciones
+                                </h4>
+
+                                {% if canciones %}
+                                <div class="table-responsive">
+                                    <table class="table table-borderless align-middle">
+                                        <thead>
+                                            <tr class="text-grey-500 font-xsssss fw-600 text-uppercase">
+                                                <th style="width:40px;">#</th>
+                                                <th>Título</th>
+                                                <th style="width:100px;">Duración</th>
+                                                <th style="width:140px;"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for cancion in canciones %}
+                                            <tr class="border-bottom">
+                                                <td class="font-xsss text-grey-500 fw-600">{{ cancion.numero }}</td>
+                                                <td>
+                                                    <span class="fw-600 font-xsss text-grey-900">{{ cancion.titulo }}</span>
+                                                </td>
+                                                <td class="font-xsss text-grey-500">
+                                                    {% if cancion.duracion %}{{ cancion.duracion_formato }}{% else %}--:--{% endif %}
+                                                </td>
+                                                <td class="text-end">
+                                                    {% if cancion.archivo %}
+                                                    <button class="btn p-0 me-2 btn-play" data-src="{{ cancion.archivo.url }}" title="Reproducir">
+                                                        <i class="feather-play-circle text-current" style="font-size:22px;"></i>
+                                                    </button>
+                                                    {% endif %}
+                                                    {% if es_propietario %}
+                                                    <form method="post" action="{% url 'eliminar_cancion' cancion.pk %}" class="d-inline" onsubmit="return confirm('¿Eliminar esta canción?');">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn p-0" title="Eliminar"><i class="feather-trash-2 text-danger" style="font-size:18px;"></i></button>
+                                                    </form>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {% else %}
+                                <div class="text-center py-5">
+                                    <i class="feather-music text-grey-300" style="font-size:50px;"></i>
+                                    <p class="font-xsss text-grey-500 mt-3">Este álbum aún no tiene canciones.</p>
+                                    {% if es_propietario %}
+                                    <a href="{% url 'agregar_cancion' album.pk %}" class="btn bg-current text-white fw-600 font-xssss rounded-xl px-4 py-2 mt-2">
+                                        <i class="feather-plus me-1"></i>Agregar primera canción
+                                    </a>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+<!-- Audio player oculto -->
+<audio id="audio-player" preload="none"></audio>
+
+<script>
+(function(){
+    var audio = document.getElementById('audio-player');
+    var playing = null;
+
+    document.querySelectorAll('.btn-play').forEach(function(btn){
+        btn.addEventListener('click', function(){
+            var src = this.getAttribute('data-src');
+            var icon = this.querySelector('i');
+
+            if (playing === this) {
+                audio.pause();
+                icon.classList.remove('feather-pause-circle');
+                icon.classList.add('feather-play-circle');
+                playing = null;
+                return;
+            }
+
+            if (playing) {
+                var prevIcon = playing.querySelector('i');
+                prevIcon.classList.remove('feather-pause-circle');
+                prevIcon.classList.add('feather-play-circle');
+            }
+
+            audio.src = src;
+            audio.play();
+            icon.classList.remove('feather-play-circle');
+            icon.classList.add('feather-pause-circle');
+            playing = this;
+        });
+    });
+
+    audio.addEventListener('ended', function(){
+        if (playing) {
+            var icon = playing.querySelector('i');
+            icon.classList.remove('feather-pause-circle');
+            icon.classList.add('feather-play-circle');
+            playing = null;
+        }
+    });
+})();
+</script>
+{% endblock %}

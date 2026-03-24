@@ -1,0 +1,242 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Veriffai - Verificar email</title>
+    <link rel="stylesheet" href="{% static 'sociala/css/themify-icons.css' %}">
+    <link rel="stylesheet" href="{% static 'sociala/css/feather.css' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'sociala/images/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'sociala/css/style.css' %}">
+    <style>
+        .code-boxes {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        .code-box {
+            width: 48px;
+            height: 56px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            outline: none;
+            text-transform: uppercase;
+            caret-color: #05f;
+            transition: border-color 0.2s;
+        }
+        .code-box:focus {
+            border-color: #05f;
+            box-shadow: 0 0 0 3px rgba(0,85,255,.12);
+        }
+        .code-box.filled {
+            border-color: #05f;
+            background: #f0f4ff;
+        }
+        .code-box.error {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+        .code-separator {
+            font-size: 28px;
+            font-weight: 700;
+            color: #aaa;
+            user-select: none;
+        }
+    </style>
+</head>
+
+<body class="color-theme-blue">
+
+    <div class="preloader"></div>
+
+    <div class="main-wrap">
+
+        <div class="row m-0" style="min-height:100vh;">
+
+            <div class="col-xl-5 d-none d-xl-flex p-0 bg-image-cover bg-no-repeat align-items-end"
+                style="background-image: url({% static 'sociala/images/login-bg.jpg' %});">
+                <div class="p-4">
+                    <a href="/"><img src="/static/veriffAi.png" alt="VeriffAi" style="height:48px;"></a>
+                </div>
+            </div>
+
+            <div class="col-xl-7 col-12 d-flex align-items-center justify-content-center bg-white p-5">
+                <div class="w-100" style="max-width:420px;">
+
+                    <div class="d-block d-xl-none mb-4 text-center">
+                        <a href="/"><img src="/static/veriffAi.png" alt="VeriffAi" style="height:40px;"></a>
+                    </div>
+
+                    <div class="text-center mb-4">
+                        <i class="feather-shield text-current" style="font-size:60px;"></i>
+                    </div>
+
+                    <h2 class="fw-700 display1-size display2-md-size mb-3 text-center">Verifica tu email</h2>
+
+                    <p class="font-xsss text-grey-500 fw-500 mb-4 lh-26 text-center">
+                        Te hemos enviado un código de verificación a <strong>{{ email }}</strong>. Escribe el código a continuación.
+                    </p>
+
+                    <!-- Formulario de verificación -->
+                    <form id="verifyForm" method="POST" action="{% url 'account_email_verification_sent' %}">
+                        {% csrf_token %}
+                        <input type="hidden" id="codeHidden" name="code" value="">
+
+                        <div class="form-group mb-3">
+                            <div class="code-boxes">
+                                <input type="text" class="code-box" data-idx="0" maxlength="1" inputmode="text" autocomplete="off">
+                                <input type="text" class="code-box" data-idx="1" maxlength="1" inputmode="text" autocomplete="off">
+                                <input type="text" class="code-box" data-idx="2" maxlength="1" inputmode="text" autocomplete="off">
+                                <input type="text" class="code-box" data-idx="3" maxlength="1" inputmode="text" autocomplete="off">
+                                <span class="code-separator">—</span>
+                                <input type="text" class="code-box" data-idx="4" maxlength="1" inputmode="text" autocomplete="off">
+                                <input type="text" class="code-box" data-idx="5" maxlength="1" inputmode="text" autocomplete="off">
+                                <input type="text" class="code-box" data-idx="6" maxlength="1" inputmode="text" autocomplete="off">
+                                <input type="text" class="code-box" data-idx="7" maxlength="1" inputmode="text" autocomplete="off">
+                            </div>
+
+                            {% if verify_form.code.errors %}
+                            <div class="text-center mt-2">
+                                <small class="text-danger font-xsss fw-600">{{ verify_form.code.errors|join:", " }}</small>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        {% if verify_form.non_field_errors %}
+                        <div class="mb-2 text-center">
+                            <small class="text-danger font-xsss fw-600">{{ verify_form.non_field_errors|join:", " }}</small>
+                        </div>
+                        {% endif %}
+
+                        {{ redirect_field }}
+
+                        <div class="form-group mb-3">
+                            <button type="submit" id="btnConfirm"
+                                class="form-control text-center style2-input text-white fw-600 bg-dark border-0 p-0"
+                                disabled>
+                                Confirmar código
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Reenviar código -->
+                    {% if can_resend %}
+                    <form id="resend" method="POST" action="{% url 'account_email_verification_sent' %}" class="text-center mb-3">
+                        <input type="hidden" name="action" value="resend">
+                        {{ redirect_field }}
+                        {% csrf_token %}
+                        <button type="submit" class="btn border-0 bg-transparent font-xsss text-grey-700 fw-600">
+                            <i class="feather-refresh-cw me-1"></i>Reenviar código
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    <h6 class="text-grey-500 font-xsss fw-500 mt-0 mb-0 lh-32 text-center">
+                        {% if cancel_url %}
+                        <a href="{{ cancel_url }}" class="fw-700 ms-1">
+                            <i class="feather-arrow-left me-1"></i>Cancelar
+                        </a>
+                        {% else %}
+                        <a href="{% url 'account_login' %}" class="fw-700 ms-1">
+                            <i class="feather-arrow-left me-1"></i>Volver al inicio de sesión
+                        </a>
+                        {% endif %}
+                    </h6>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="{% static 'sociala/js/plugin.js' %}"></script>
+    <script src="{% static 'sociala/js/scripts.js' %}"></script>
+    <script>
+    (function() {
+        var boxes = document.querySelectorAll('.code-box');
+        var hidden = document.getElementById('codeHidden');
+        var btn = document.getElementById('btnConfirm');
+
+        function updateHidden() {
+            var code = '';
+            boxes.forEach(function(b, i) {
+                code += b.value.toUpperCase();
+                if (i === 3) code += '-';
+            });
+            hidden.value = code;
+            btn.disabled = code.replace('-', '').length < 8;
+            boxes.forEach(function(b) {
+                b.classList.toggle('filled', b.value.length > 0);
+            });
+        }
+
+        boxes.forEach(function(box, idx) {
+            // Bloquear pegar
+            box.addEventListener('paste', function(e) {
+                e.preventDefault();
+            });
+
+            // Bloquear drag & drop
+            box.addEventListener('drop', function(e) {
+                e.preventDefault();
+            });
+
+            // Bloquear menú contextual (clic derecho)
+            box.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+            });
+
+            box.addEventListener('input', function() {
+                var val = this.value.replace(/[^a-zA-Z0-9]/g, '');
+                this.value = val.charAt(0).toUpperCase();
+                updateHidden();
+                if (val && idx < boxes.length - 1) {
+                    boxes[idx + 1].focus();
+                }
+            });
+
+            box.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && !this.value && idx > 0) {
+                    boxes[idx - 1].focus();
+                    boxes[idx - 1].value = '';
+                    updateHidden();
+                }
+                if (e.key === 'ArrowLeft' && idx > 0) {
+                    e.preventDefault();
+                    boxes[idx - 1].focus();
+                }
+                if (e.key === 'ArrowRight' && idx < boxes.length - 1) {
+                    e.preventDefault();
+                    boxes[idx + 1].focus();
+                }
+                // Bloquear Ctrl+V / Cmd+V
+                if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+                    e.preventDefault();
+                }
+            });
+
+            box.addEventListener('focus', function() {
+                this.select();
+            });
+        });
+
+        // Auto-focus primer box
+        if (boxes.length > 0) boxes[0].focus();
+
+        // Marcar error visual si hay errores del servidor
+        {% if verify_form.code.errors %}
+        boxes.forEach(function(b) { b.classList.add('error'); });
+        {% endif %}
+    })();
+    </script>
+</body>
+</html>

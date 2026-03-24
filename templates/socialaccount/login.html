@@ -1,0 +1,81 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Veriffai - Iniciar sesión con {{ provider.name }}</title>
+    <link rel="stylesheet" href="{% static 'sociala/css/themify-icons.css' %}">
+    <link rel="stylesheet" href="{% static 'sociala/css/feather.css' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'sociala/images/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'sociala/css/style.css' %}">
+</head>
+
+<body class="color-theme-blue">
+
+    <div class="preloader"></div>
+
+    <div class="main-wrap">
+
+        <div class="row m-0" style="min-height:100vh;">
+
+            <!-- Panel izquierdo: imagen de fondo (solo xl) -->
+            <div class="col-xl-5 d-none d-xl-flex p-0 bg-image-cover bg-no-repeat align-items-end"
+                style="background-image: url({% static 'sociala/images/login-bg.jpg' %});">
+                <div class="p-4">
+                    <a href="/"><img src="/static/veriffAi.png" alt="VeriffAi" style="height:48px;"></a>
+                </div>
+            </div>
+
+            <!-- Panel derecho: formulario -->
+            <div class="col-xl-7 col-12 d-flex align-items-center justify-content-center bg-white p-5">
+                <div class="w-100" style="max-width:420px;">
+
+                    <!-- Logo visible solo en mobile -->
+                    <div class="d-block d-xl-none mb-4 text-center">
+                        <a href="/"><img src="/static/veriffAi.png" alt="VeriffAi" style="height:40px;"></a>
+                    </div>
+
+                    {% if process == "connect" %}
+                    <h2 class="fw-700 display1-size display2-md-size mb-3">Conectar cuenta <br>de {{ provider.name }}</h2>
+                    <p class="font-xsss text-grey-500 fw-500 mb-4 lh-26">
+                        Estás a punto de conectar una cuenta externa desde {{ provider.name }}.
+                    </p>
+                    {% else %}
+                    <h2 class="fw-700 display1-size display2-md-size mb-3">Iniciar sesión <br>con {{ provider.name }}</h2>
+                    <p class="font-xsss text-grey-500 fw-500 mb-4 lh-26">
+                        Estás a punto de iniciar sesión usando tu cuenta de {{ provider.name }}.
+                    </p>
+                    {% endif %}
+
+                    <form method="POST">
+                        {% csrf_token %}
+
+                        <div class="form-group mb-3">
+                            <button type="submit"
+                                class="form-control text-left style2-input text-white fw-600 bg-facebook border-0 p-0 d-flex align-items-center">
+                                <img src="{% static 'sociala/images/icon-1.png' %}" alt="Google" class="ms-2 w40 mb-1 me-4">
+                                Continuar con {{ provider.name }}
+                            </button>
+                        </div>
+                    </form>
+
+                    <h6 class="text-grey-500 font-xsss fw-500 mt-0 mb-0 lh-32">
+                        <a href="{% url 'account_login' %}" class="fw-700 ms-1">
+                            <i class="feather-arrow-left me-1"></i>Volver al inicio de sesión
+                        </a>
+                    </h6>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="{% static 'sociala/js/plugin.js' %}"></script>
+    <script src="{% static 'sociala/js/scripts.js' %}"></script>
+</body>
+</html>

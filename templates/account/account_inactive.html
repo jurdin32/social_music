@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Veriffai - Cuenta inactiva</title>
+    <link rel="stylesheet" href="{% static 'sociala/css/themify-icons.css' %}">
+    <link rel="stylesheet" href="{% static 'sociala/css/feather.css' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'sociala/images/favicon.png' %}">
+    <link rel="stylesheet" href="{% static 'sociala/css/style.css' %}">
+</head>
+
+<body class="color-theme-blue">
+
+    <div class="preloader"></div>
+
+    <div class="main-wrap">
+
+        <div class="row m-0" style="min-height:100vh;">
+
+            <div class="col-xl-5 d-none d-xl-flex p-0 bg-image-cover bg-no-repeat align-items-end"
+                style="background-image: url({% static 'sociala/images/login-bg.jpg' %});">
+                <div class="p-4">
+                    <a href="/"><img src="/static/veriffAi.png" alt="VeriffAi" style="height:48px;"></a>
+                </div>
+            </div>
+
+            <div class="col-xl-7 col-12 d-flex align-items-center justify-content-center bg-white p-5">
+                <div class="w-100" style="max-width:420px;">
+
+                    <div class="d-block d-xl-none mb-4 text-center">
+                        <a href="/"><img src="/static/veriffAi.png" alt="VeriffAi" style="height:40px;"></a>
+                    </div>
+
+                    <div class="text-center mb-4">
+                        <i class="feather-alert-circle text-warning" style="font-size:60px;"></i>
+                    </div>
+
+                    <h2 class="fw-700 display1-size display2-md-size mb-3 text-center">Cuenta inactiva</h2>
+
+                    <p class="font-xsss text-grey-500 fw-500 mb-4 lh-26 text-center">
+                        Tu cuenta no ha sido verificada. Inicia sesión para recibir un nuevo código de verificación en tu correo electrónico.
+                    </p>
+
+                    <div class="form-group mb-3">
+                        <a href="{% url 'account_login' %}"
+                            class="form-control text-center style2-input text-white fw-600 bg-dark border-0 p-0 d-flex align-items-center justify-content-center">
+                            Iniciar sesión
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="{% static 'sociala/js/plugin.js' %}"></script>
+    <script src="{% static 'sociala/js/scripts.js' %}"></script>
+</body>
+</html>

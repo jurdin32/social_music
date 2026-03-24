@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crear Álbum - Veriffai{% endblock %}
+
+{% block content %}
+                    <div class="row justify-content-center">
+                        <div class="col-lg-8">
+                            <div class="card w-100 border-0 shadow-xss rounded-xxl p-4 mb-3">
+                                <div class="card-body p-0">
+                                    <h2 class="fw-700 font-md text-grey-900 mb-4">
+                                        <i class="feather-plus-circle text-current me-2"></i>Crear nuevo álbum
+                                    </h2>
+
+                                    <form method="post" enctype="multipart/form-data">
+                                        {% csrf_token %}
+
+                                        <!-- Portada preview -->
+                                        <div class="text-center mb-4">
+                                            <div id="portada-preview" class="d-inline-block rounded-xl overflow-hidden border" style="width:200px;height:200px;background:#f5f5f5;">
+                                                <div class="w-100 h-100 d-flex align-items-center justify-content-center" id="portada-placeholder">
+                                                    <div class="text-center">
+                                                        <i class="feather-image text-grey-400" style="font-size:40px;"></i>
+                                                        <p class="font-xsssss text-grey-400 mt-2 mb-0">500 × 500 px</p>
+                                                    </div>
+                                                </div>
+                                                <img id="portada-img" src="" class="w-100 h-100" style="object-fit:cover;display:none;">
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label class="fw-600 font-xsss text-grey-900 mb-2">{{ form.portada.label }}</label>
+                                            {{ form.portada }}
+                                            {% if form.portada.errors %}<small class="text-danger font-xsssss">{{ form.portada.errors|join:", " }}</small>{% endif %}
+                                        </div>
+
+                                        <div class="form-group icon-input mb-3">
+                                            <i class="font-sm ti-music text-grey-500 pe-0"></i>
+                                            <label class="fw-600 font-xsss text-grey-900 mb-2">{{ form.titulo.label }}</label>
+                                            {{ form.titulo }}
+                                            {% if form.titulo.errors %}<small class="text-danger font-xsssss">{{ form.titulo.errors|join:", " }}</small>{% endif %}
+                                        </div>
+
+                                        <div class="form-group mb-3">
+                                            <label class="fw-600 font-xsss text-grey-900 mb-2">{{ form.descripcion.label }}</label>
+                                            {{ form.descripcion }}
+                                            {% if form.descripcion.errors %}<small class="text-danger font-xsssss">{{ form.descripcion.errors|join:", " }}</small>{% endif %}
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group mb-3">
+                                                    <label class="fw-600 font-xsss text-grey-900 mb-2">{{ form.genero.label }}</label>
+                                                    {{ form.genero }}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group mb-3">
+                                                    <label class="fw-600 font-xsss text-grey-900 mb-2">{{ form.fecha_lanzamiento.label }}</label>
+                                                    {{ form.fecha_lanzamiento }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-check mb-4">
+                                            {{ form.es_publico }}
+                                            <label class="form-check-label fw-600 font-xsss text-grey-900 ms-2">{{ form.es_publico.label }}</label>
+                                        </div>
+
+                                        {% if form.non_field_errors %}
+                                        <div class="mb-3">
+                                            <small class="text-danger font-xsss">{{ form.non_field_errors|join:", " }}</small>
+                                        </div>
+                                        {% endif %}
+
+                                        <div class="d-flex gap-2">
+                                            <button type="submit" class="btn bg-current text-white fw-600 font-xssss rounded-xl px-4 py-2">
+                                                <i class="feather-save me-1"></i>Crear álbum
+                                            </button>
+                                            <a href="{% url 'mis_albumes' %}" class="btn bg-grey text-grey-700 fw-600 font-xssss rounded-xl px-4 py-2">Cancelar</a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+<script>
+document.querySelector('input[name="portada"]').addEventListener('change', function() {
+    if (this.files && this.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('portada-img').src = e.target.result;
+            document.getElementById('portada-img').style.display = 'block';
+            document.getElementById('portada-placeholder').style.display = 'none';
+        };
+        reader.readAsDataURL(this.files[0]);
+    }
+});
+</script>
+{% endblock %}

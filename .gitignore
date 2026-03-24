@@ -1,0 +1,35 @@
+# Entorno virtual
+.venv/
+venv/
+env/
+
+# Django
+*.pyc
+__pycache__/
+db.sqlite3
+*.log
+
+# Archivos generados en runtime (no subir a Git)
+media/
+staticfiles/
+logs/
+
+# Variables de entorno
+.env
+.env.*
+
+# Credenciales y secretos
+client_secret*.json
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Variables de entorno
+.env
+.env.*
+!.env.example

@@ -1,0 +1,14 @@
+{% load account %}{% load i18n %}{% autoescape off %}{% user_display user as user_display %}
+Hola {{ user_display }},
+
+Tu código de verificación de Veriffai es:
+
+{{ code }}
+
+Ingresa este código en la página de verificación para activar tu cuenta.
+El código expira en 15 minutos.
+
+Si tú no solicitaste este código, ignora este mensaje.
+
+— El equipo de Veriffai
+{% endautoescape %}

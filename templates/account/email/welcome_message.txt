@@ -1,0 +1,14 @@
+Hola {{ user_display }},
+
+¡Bienvenido/a a Veriffai!
+
+Tu cuenta ha sido verificada exitosamente y ya está activa.
+
+Ahora puedes disfrutar de todas las funcionalidades de nuestra plataforma:
+- Conectar con otros usuarios
+- Compartir tu contenido
+- Descubrir nueva música
+
+¡Nos alegra tenerte con nosotros!
+
+— El equipo de Veriffai
