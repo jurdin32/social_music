@@ -20,4 +20,6 @@ urlpatterns = [
     path('albumes/<int:album_id>/eliminar/', views.eliminar_album, name='eliminar_album'),
     path('albumes/<int:album_id>/canciones/agregar/', views.agregar_cancion, name='agregar_cancion'),
     path('canciones/<int:cancion_id>/eliminar/', views.eliminar_cancion, name='eliminar_cancion'),
+    path('usuario/<str:username>/seguir/', views.toggle_seguir, name='toggle_seguir'),
+    path('api/usuarios/', views.api_usuarios, name='api_usuarios'),
 ]

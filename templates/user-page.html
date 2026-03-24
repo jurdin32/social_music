@@ -24,12 +24,18 @@
                                         </button>
                                         {% endif %}
                                     </figure>
-                                    <h4 class="fw-700 font-sm mt-2 mb-lg-5 mb-4 pl-15">{{ perfil_visto.nombre_completo }} <span class="fw-500 font-xssss text-grey-500 mt-1 mb-3 d-block">{{ usuario_visto.email }}</span></h4>
+                                    <h4 class="fw-700 font-sm mt-2 mb-1 pl-15">{{ perfil_visto.nombre_completo }} <span class="fw-500 font-xssss text-grey-500 mt-1 mb-0 d-block">{{ usuario_visto.email }}</span></h4>
+                                    <div class="d-flex pl-15 mb-3">
+                                        <span class="font-xssss text-grey-600 fw-600 me-3"><strong class="text-grey-900">{{ perfil_visto.num_seguidores }}</strong> seguidores</span>
+                                        <span class="font-xssss text-grey-600 fw-600"><strong class="text-grey-900">{{ perfil_visto.num_siguiendo }}</strong> siguiendo</span>
+                                    </div>
                                     <div class="d-flex align-items-center justify-content-center position-absolute-md right-15 top-0 me-2">
                                         {% if es_propio %}
                                         <a href="{% url 'editar_perfil' %}" class="d-none d-lg-block bg-primary p-3 z-index-1 rounded-3 text-white font-xsssss text-uppercase fw-700 ls-3">Editar perfil</a>
                                         {% else %}
-                                        <a href="#" class="d-none d-lg-block bg-success p-3 z-index-1 rounded-3 text-white font-xsssss text-uppercase fw-700 ls-3">Agregar amigo</a>
+                                        <a href="{% url 'toggle_seguir' usuario_visto.username %}" class="d-none d-lg-block {% if ya_sigo %}bg-greylight text-grey-700{% else %}bg-success text-white{% endif %} p-3 z-index-1 rounded-3 font-xsssss text-uppercase fw-700 ls-3">
+                                            {% if ya_sigo %}<i class="feather-user-check me-1"></i>Siguiendo{% else %}<i class="feather-user-plus me-1"></i>Seguir{% endif %}
+                                        </a>
                                         {% endif %}
                                         <a href="#" class="d-none d-lg-block bg-greylight btn-round-lg ms-2 rounded-3 text-grey-700"><i class="feather-mail font-md"></i></a>
                                         <a href="#" id="dropdownMenu4" class="d-none d-lg-block bg-greylight btn-round-lg ms-2 rounded-3 text-grey-700" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti-more font-md tetx-dark"></i></a>
