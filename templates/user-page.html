@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Perfil de usuario - Sociala{% endblock %}
+{% block title %}{{ perfil_visto.nombre_completo }} - Veriffai{% endblock %}
 
 {% block content %}
                     <div class="row">
@@ -37,63 +37,43 @@
                                             {% if ya_sigo %}<i class="feather-user-check me-1"></i>Siguiendo{% else %}<i class="feather-user-plus me-1"></i>Seguir{% endif %}
                                         </a>
                                         {% endif %}
-                                        <a href="#" class="d-none d-lg-block bg-greylight btn-round-lg ms-2 rounded-3 text-grey-700"><i class="feather-mail font-md"></i></a>
-                                        <a href="#" id="dropdownMenu4" class="d-none d-lg-block bg-greylight btn-round-lg ms-2 rounded-3 text-grey-700" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti-more font-md tetx-dark"></i></a>
-                                        <div class="dropdown-menu dropdown-menu-end p-4 rounded-xxl border-0 shadow-lg" aria-labelledby="dropdownMenu4">
-                                            <div class="card-body p-0 d-flex">
-                                                <i class="feather-bookmark text-grey-500 me-3 font-lg"></i>
-                                                <h4 class="fw-600 text-grey-900 font-xssss mt-0 me-0">Guardar enlace <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Añadir a tus elementos guardados</span></h4>
-                                            </div>
-                                            <div class="card-body p-0 d-flex mt-2">
-                                                <i class="feather-alert-circle text-grey-500 me-3 font-lg"></i>
-                                                <h4 class="fw-600 text-grey-900 font-xssss mt-0 me-0">Ocultar publicación <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Guardar en guardados</span></h4>
-                                            </div>
-                                            <div class="card-body p-0 d-flex mt-2">
-                                                <i class="feather-alert-octagon text-grey-500 me-3 font-lg"></i>
-                                                <h4 class="fw-600 text-grey-900 font-xssss mt-0 me-0">Ocultar todo del grupo <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Guardar en guardados</span></h4>
-                                            </div>
-                                            <div class="card-body p-0 d-flex mt-2">
-                                                <i class="feather-lock text-grey-500 me-3 font-lg"></i>
-                                                <h4 class="fw-600 mb-0 text-grey-900 font-xssss mt-0 me-0">Dejar de seguir el grupo <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Guardar en guardados</span></h4>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                                 <div class="card-body d-block w-100 shadow-none mb-0 p-0 border-top-xs">
-                                    <ul class="nav nav-tabs h55 d-flex product-info-tab border-bottom-0 ps-4" id="pills-tab" role="tablist">
-                                        <li class="active list-inline-item me-5"><a class="fw-700 font-xssss text-grey-500 pt-3 pb-3 ls-1 d-inline-block active" href="#navtabs1" data-toggle="tab">Acerca de</a></li>
-                                        <li class="list-inline-item me-5"><a class="fw-700 font-xssss text-grey-500 pt-3 pb-3 ls-1 d-inline-block" href="#navtabs2" data-toggle="tab">Membresía</a></li>
-                                        <li class="list-inline-item me-5"><a class="fw-700 font-xssss text-grey-500 pt-3 pb-3 ls-1 d-inline-block" href="#navtabs3" data-toggle="tab">Discusión</a></li>
-                                        <li class="list-inline-item me-5"><a class="fw-700 font-xssss text-grey-500 pt-3 pb-3 ls-1 d-inline-block" href="#navtabs4" data-toggle="tab">Video</a></li>
-                                        <li class="list-inline-item me-5"><a class="fw-700 font-xssss text-grey-500 pt-3 pb-3 ls-1 d-inline-block" href="#navtabs3" data-toggle="tab">Grupo</a></li>
-                                        <li class="list-inline-item me-5"><a class="fw-700 font-xssss text-grey-500 pt-3 pb-3 ls-1 d-inline-block" href="#navtabs1" data-toggle="tab">Eventos</a></li>
-                                        <li class="list-inline-item me-5"><a class="fw-700 font-xssss text-grey-500 pt-3 pb-3 ls-1 d-inline-block" href="#navtabs7" data-toggle="tab">Multimedia</a></li>
-                                        <li class="list-inline-item me-5"><a class="fw-700 me-sm-5 font-xssss text-grey-500 pt-3 pb-3 ls-1 d-inline-block" href="#navtabs-albumes" data-toggle="tab"><i class="feather-disc me-1"></i>Álbumes</a></li>
+                                    <ul class="nav nav-tabs h55 d-flex product-info-tab border-bottom-0 ps-4" id="perfil-tabs" role="tablist">
+                                        <li class="list-inline-item me-5"><a class="fw-700 font-xssss text-grey-500 pt-3 pb-3 ls-1 d-inline-block active tab-link" href="#" data-tab="tab-albumes"><i class="feather-disc me-1"></i>Álbumes</a></li>
+                                        <li class="list-inline-item me-5"><a class="fw-700 font-xssss text-grey-500 pt-3 pb-3 ls-1 d-inline-block tab-link" href="#" data-tab="tab-seguidores"><i class="feather-users me-1"></i>Seguidores</a></li>
+                                        <li class="list-inline-item me-5"><a class="fw-700 font-xssss text-grey-500 pt-3 pb-3 ls-1 d-inline-block tab-link" href="#" data-tab="tab-siguiendo"><i class="feather-user-check me-1"></i>Siguiendo</a></li>
                                     </ul>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Sidebar -->
                         <div class="col-xl-4 col-xxl-3 col-lg-4 pe-0">
 
+                            <!-- Estadísticas musicales -->
                             <div class="card w-100 shadow-xss rounded-xxl border-0 mb-3 mt-3">
-                                <div class="card-body p-3 border-0">
-                                    <div class="row">
-                                        <div class="col-3">
-                                            <div class="chart-container w50 h50">
-                                                <div class="chart position-relative" data-percent="78" data-bar-color="#a7d212">
-                                                    <span class="percent fw-700 font-xsss" data-after="%">78</span>
-                                                </div>
-                                            </div>
+                                <div class="card-body p-4">
+                                    <h4 class="fw-700 mb-3 font-xsss text-grey-900"><i class="feather-bar-chart-2 text-current me-2"></i>Estadísticas</h4>
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <h2 class="fw-700 text-current mb-0">{{ albumes|length }}</h2>
+                                            <span class="font-xsssss text-grey-500 fw-600 text-uppercase">Álbumes</span>
                                         </div>
-                                        <div class="col-8 ps-1">
-                                            <h4 class="font-xsss d-block fw-700 mt-2 mb-0">Python Avanzado <span class="float-right mt-2 font-xsssss text-grey-500">87%</span></h4>
-                                            <p class="font-xssss fw-600 text-grey-500 lh-26 mb-0">Diseñador</p>
+                                        <div class="col-4">
+                                            <h2 class="fw-700 text-current mb-0">{{ total_canciones }}</h2>
+                                            <span class="font-xsssss text-grey-500 fw-600 text-uppercase">Canciones</span>
+                                        </div>
+                                        <div class="col-4">
+                                            <h2 class="fw-700 text-current mb-0">{{ perfil_visto.num_seguidores }}</h2>
+                                            <span class="font-xsssss text-grey-500 fw-600 text-uppercase">Seguidores</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
+                            <!-- Acerca de -->
                             <div class="card w-100 shadow-xss rounded-xxl border-0 mb-3">
                                 <div class="card-body d-block p-4">
                                     <h4 class="fw-700 mb-3 font-xsss text-grey-900">Acerca de</h4>
@@ -104,287 +84,195 @@
                                     <h4 class="fw-700 text-grey-900 font-xssss mt-0">{% if perfil_visto.es_privado %}Privado{% else %}Público{% endif %} <span class="d-block font-xssss fw-500 mt-1 lh-3 text-grey-500">{% if perfil_visto.es_privado %}Solo amigos pueden verlo{% else %}Perfil visible para todos{% endif %}</span></h4>
                                 </div>
                                 <div class="card-body d-flex pt-0">
-                                    <i class="feather-eye text-grey-500 me-3 font-lg"></i>
-                                    <h4 class="fw-700 text-grey-900 font-xssss mt-0">{% if perfil_visto.es_privado %}Oculto{% else %}Visible{% endif %} <span class="d-block font-xssss fw-500 mt-1 lh-3 text-grey-500">{% if perfil_visto.es_privado %}Solo amigos pueden encontrarte{% else %}Cualquiera puede encontrarte{% endif %}</span></h4>
-                                </div>
-                                <div class="card-body d-flex pt-0">
                                     <i class="feather-map-pin text-grey-500 me-3 font-lg"></i>
                                     <h4 class="fw-700 text-grey-900 font-xssss mt-1">{{ perfil_visto.ubicacion|default:"Sin ubicación" }}</h4>
                                 </div>
                                 {% if perfil_visto.sitio_web %}
                                 <div class="card-body d-flex pt-0">
                                     <i class="feather-globe text-grey-500 me-3 font-lg"></i>
-                                    <h4 class="fw-700 text-grey-900 font-xssss mt-1"><a href="{{ perfil_visto.sitio_web }}" target="_blank" rel="noopener">{{ perfil_visto.sitio_web }}</a></h4>
+                                    <h4 class="fw-700 text-grey-900 font-xssss mt-1"><a href="{{ perfil_visto.sitio_web }}" target="_blank" rel="noopener noreferrer">{{ perfil_visto.sitio_web }}</a></h4>
                                 </div>
                                 {% endif %}
                                 <div class="card-body d-flex pt-0">
-                                    <i class="feather-users text-grey-500 me-3 font-lg"></i>
+                                    <i class="feather-briefcase text-grey-500 me-3 font-lg"></i>
                                     <h4 class="fw-700 text-grey-900 font-xssss mt-1">{{ perfil_visto.ocupacion|default:"Sin ocupación" }}</h4>
                                 </div>
                             </div>
 
+                            <!-- Portadas de álbumes en sidebar -->
+                            {% if albumes %}
                             <div class="card w-100 shadow-xss rounded-xxl border-0 mb-3">
                                 <div class="card-body d-flex align-items-center p-4">
-                                    <h4 class="fw-700 mb-0 font-xssss text-grey-900">Fotos</h4>
-                                    <a href="#" class="fw-600 ms-auto font-xssss text-primary">Ver todo</a>
+                                    <h4 class="fw-700 mb-0 font-xssss text-grey-900"><i class="feather-disc text-current me-2"></i>Álbumes recientes</h4>
                                 </div>
                                 <div class="card-body d-block pt-0 pb-2">
                                     <div class="row">
-                                        <div class="col-6 mb-2 pe-1"><a href="{% static 'sociala/images/e-2.jpg' %}" data-lightbox="roadtrip"><img src="{% static 'sociala/images/e-2.jpg' %}" alt="image" class="img-fluid rounded-3 w-100"></a></div>
-                                        <div class="col-6 mb-2 ps-1"><a href="{% static 'sociala/images/e-3.jpg' %}" data-lightbox="roadtrip"><img src="{% static 'sociala/images/e-3.jpg' %}" alt="image" class="img-fluid rounded-3 w-100"></a></div>
-                                        <div class="col-6 mb-2 pe-1"><a href="{% static 'sociala/images/e-4.jpg' %}" data-lightbox="roadtrip"><img src="{% static 'sociala/images/e-4.jpg' %}" alt="image" class="img-fluid rounded-3 w-100"></a></div>
-                                        <div class="col-6 mb-2 ps-1"><a href="{% static 'sociala/images/e-5.jpg' %}" data-lightbox="roadtrip"><img src="{% static 'sociala/images/e-5.jpg' %}" alt="image" class="img-fluid rounded-3 w-100"></a></div>
-                                        <div class="col-6 mb-2 pe-1"><a href="{% static 'sociala/images/e-2.jpg' %}" data-lightbox="roadtrip"><img src="{% static 'sociala/images/e-2.jpg' %}" alt="image" class="img-fluid rounded-3 w-100"></a></div>
-                                        <div class="col-6 mb-2 ps-1"><a href="{% static 'sociala/images/e-1.jpg' %}" data-lightbox="roadtrip"><img src="{% static 'sociala/images/e-1.jpg' %}" alt="image" class="img-fluid rounded-3 w-100"></a></div>
+                                        {% for album in albumes|slice:":6" %}
+                                        <div class="col-6 mb-2 {% if forloop.counter|divisibleby:2 %}ps-1{% else %}pe-1{% endif %}">
+                                            <a href="{% url 'detalle_album' album.pk %}">
+                                                {% if album.portada %}
+                                                <img src="{{ album.portada.url }}" alt="{{ album.titulo }}" class="img-fluid rounded-3 w-100" style="aspect-ratio:1;object-fit:cover;">
+                                                {% else %}
+                                                <div class="rounded-3 w-100 bg-greylight d-flex align-items-center justify-content-center" style="aspect-ratio:1;">
+                                                    <i class="feather-disc text-grey-400" style="font-size:24px;"></i>
+                                                </div>
+                                                {% endif %}
+                                            </a>
+                                        </div>
+                                        {% endfor %}
                                     </div>
                                 </div>
-                                <div class="card-body d-block w-100 pt-0">
-                                    <a href="#" class="p-2 lh-28 w-100 d-block bg-grey text-grey-800 text-center font-xssss fw-700 rounded-xl"><i class="feather-external-link font-xss me-2"></i> Ver más</a>
-                                </div>
                             </div>
-
-                            <div class="card w-100 shadow-xss rounded-xxl border-0 mb-3">
-                                <div class="card-body d-flex align-items-center p-4">
-                                    <h4 class="fw-700 mb-0 font-xssss text-grey-900">Eventos</h4>
-                                    <a href="#" class="fw-600 ms-auto font-xssss text-primary">Ver todo</a>
-                                </div>
-                                <div class="card-body d-flex pt-0 ps-4 pe-4 pb-3 overflow-hidden">
-                                    <div class="bg-success me-2 p-3 rounded-xxl"><h4 class="fw-700 font-lg ls-3 lh-1 text-white mb-0"><span class="ls-1 d-block font-xsss text-white fw-600">FEB</span>22</h4></div>
-                                    <h4 class="fw-700 text-grey-900 font-xssss mt-2">Reunión con clientes <span class="d-block font-xsssss fw-500 mt-1 lh-4 text-grey-500">Calle Principal 24, Piso 3, Madrid</span></h4>
-                                </div>
-                                <div class="card-body d-flex pt-0 ps-4 pe-4 pb-3 overflow-hidden">
-                                    <div class="bg-warning me-2 p-3 rounded-xxl"><h4 class="fw-700 font-lg ls-3 lh-1 text-white mb-0"><span class="ls-1 d-block font-xsss text-white fw-600">ABR</span>30</h4></div>
-                                    <h4 class="fw-700 text-grey-900 font-xssss mt-2">Programa de desarrolladores <span class="d-block font-xsssss fw-500 mt-1 lh-4 text-grey-500">Calle Principal 24, Piso 3, Madrid</span></h4>
-                                </div>
-                                <div class="card-body d-flex pt-0 ps-4 pe-4 pb-3 overflow-hidden">
-                                    <div class="bg-primary me-2 p-3 rounded-xxl"><h4 class="fw-700 font-lg ls-3 lh-1 text-white mb-0"><span class="ls-1 d-block font-xsss text-white fw-600">ABR</span>23</h4></div>
-                                    <h4 class="fw-700 text-grey-900 font-xssss mt-2">Evento de Aniversario <span class="d-block font-xsssss fw-500 mt-1 lh-4 text-grey-500">Calle Principal 24, Piso 3, Madrid</span></h4>
-                                </div>
-                            </div>
+                            {% endif %}
 
                         </div>
 
+                        <!-- Contenido principal con tabs -->
                         <div class="col-xl-8 col-xxl-9 col-lg-8">
 
-                            <!-- Sección Álbumes -->
-                            <div class="card w-100 shadow-xss rounded-xxl border-0 p-4 mb-3 mt-3">
-                                <div class="card-body p-0 d-flex align-items-center mb-3">
-                                    <h4 class="fw-700 font-xss text-grey-900 mb-0"><i class="feather-disc text-current me-2"></i>Álbumes</h4>
-                                    {% if es_propio %}
-                                    <a href="{% url 'mis_albumes' %}" class="fw-600 ms-auto font-xssss text-primary">Ver todos</a>
+                            <!-- TAB: Álbumes -->
+                            <div id="tab-albumes" class="tab-panel">
+                                <div class="card w-100 shadow-xss rounded-xxl border-0 p-4 mb-3 mt-3">
+                                    <div class="card-body p-0 d-flex align-items-center mb-3">
+                                        <h4 class="fw-700 font-xss text-grey-900 mb-0"><i class="feather-disc text-current me-2"></i>Álbumes</h4>
+                                        {% if es_propio %}
+                                        <a href="{% url 'crear_album' %}" class="fw-600 ms-auto font-xssss btn bg-current text-white rounded-xl px-3 py-2">
+                                            <i class="feather-plus me-1"></i>Crear álbum
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                    {% if albumes %}
+                                    <div class="row">
+                                        {% for album in albumes %}
+                                        <div class="col-md-4 col-sm-6 mb-3">
+                                            <a href="{% url 'detalle_album' album.pk %}" class="text-decoration-none">
+                                                <div class="card border-0 shadow-xss rounded-xl overflow-hidden h-100">
+                                                    {% if album.portada %}
+                                                    <img src="{{ album.portada.url }}" class="w-100" style="aspect-ratio:1;object-fit:cover;" alt="{{ album.titulo }}">
+                                                    {% else %}
+                                                    <div class="w-100 d-flex align-items-center justify-content-center bg-greylight" style="aspect-ratio:1;">
+                                                        <i class="feather-disc text-grey-400" style="font-size:40px;"></i>
+                                                    </div>
+                                                    {% endif %}
+                                                    <div class="p-2">
+                                                        <h5 class="fw-700 font-xsss text-grey-900 mb-1 text-truncate">{{ album.titulo }}</h5>
+                                                        <span class="font-xsssss text-grey-500">{{ album.get_genero_display }}</span>
+                                                        <div class="d-flex align-items-center mt-1">
+                                                            <span class="font-xsssss text-grey-500 me-2"><i class="feather-music me-1"></i>{{ album.num_canciones }}</span>
+                                                            <span class="font-xsssss text-grey-500"><i class="feather-clock me-1"></i>{{ album.duracion_total }}</span>
+                                                        </div>
+                                                        {% if not album.es_publico %}
+                                                        <span class="badge bg-warning text-dark font-xsssss mt-1"><i class="feather-lock me-1"></i>Privado</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <div class="text-center py-5">
+                                        <i class="feather-disc text-grey-300" style="font-size:50px;"></i>
+                                        <p class="font-xsss text-grey-500 mt-3 mb-0">
+                                            {% if es_propio %}Aún no has creado álbumes.{% else %}Este usuario no tiene álbumes públicos.{% endif %}
+                                        </p>
+                                        {% if es_propio %}
+                                        <a href="{% url 'crear_album' %}" class="btn bg-current text-white fw-600 font-xssss rounded-xl px-3 py-2 mt-3">
+                                            <i class="feather-plus me-1"></i>Crear mi primer álbum
+                                        </a>
+                                        {% endif %}
+                                    </div>
                                     {% endif %}
                                 </div>
-                                {% if albumes %}
-                                <div class="row">
-                                    {% for album in albumes|slice:":6" %}
-                                    <div class="col-md-4 col-sm-6 mb-3">
-                                        <a href="{% url 'detalle_album' album.pk %}" class="text-decoration-none">
-                                            <div class="card border-0 shadow-xss rounded-xl overflow-hidden h-100">
-                                                {% if album.portada %}
-                                                <img src="{{ album.portada.url }}" class="w-100" style="height:140px;object-fit:cover;" alt="{{ album.titulo }}">
-                                                {% else %}
-                                                <div class="w-100 d-flex align-items-center justify-content-center bg-grey" style="height:140px;">
-                                                    <i class="feather-disc text-grey-400" style="font-size:40px;"></i>
-                                                </div>
-                                                {% endif %}
-                                                <div class="p-2">
-                                                    <h5 class="fw-700 font-xsss text-grey-900 mb-0 text-truncate">{{ album.titulo }}</h5>
-                                                    <span class="font-xsssss text-grey-500">{{ album.get_genero_display }} &middot; {{ album.num_canciones }} cancion{{ album.num_canciones|pluralize:"es" }}</span>
+                            </div>
+
+                            <!-- TAB: Seguidores -->
+                            <div id="tab-seguidores" class="tab-panel" style="display:none;">
+                                <div class="card w-100 shadow-xss rounded-xxl border-0 p-4 mb-3 mt-3">
+                                    <div class="card-body p-0 mb-3">
+                                        <h4 class="fw-700 font-xss text-grey-900 mb-0"><i class="feather-users text-current me-2"></i>Seguidores <span class="font-xssss text-grey-500 fw-500">({{ perfil_visto.num_seguidores }})</span></h4>
+                                    </div>
+                                    {% if lista_seguidores %}
+                                    <div class="row">
+                                        {% for seguidor in lista_seguidores %}
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card border-0 shadow-xss rounded-xl p-3">
+                                                <div class="d-flex align-items-center">
+                                                    <a href="{% url 'pagina_usuario' seguidor.usuario.username %}">
+                                                        {% if seguidor.foto %}
+                                                        <img src="{{ seguidor.foto.url }}" class="rounded-circle me-3" style="width:50px;height:50px;object-fit:cover;" alt="">
+                                                        {% elif seguidor.get_foto %}
+                                                        <img src="{{ seguidor.get_foto }}" class="rounded-circle me-3" style="width:50px;height:50px;object-fit:cover;" alt="">
+                                                        {% else %}
+                                                        <img src="{% static 'sociala/images/user-12.png' %}" class="rounded-circle me-3" style="width:50px;height:50px;object-fit:cover;" alt="">
+                                                        {% endif %}
+                                                    </a>
+                                                    <div class="flex-grow-1">
+                                                        <a href="{% url 'pagina_usuario' seguidor.usuario.username %}" class="fw-700 font-xsss text-grey-900 text-decoration-none">{{ seguidor.nombre_completo }}</a>
+                                                        <span class="d-block font-xsssss text-grey-500">{{ seguidor.num_seguidores }} seguidores</span>
+                                                    </div>
+                                                    {% if seguidor.usuario != user %}
+                                                    <a href="{% url 'toggle_seguir' seguidor.usuario.username %}" class="btn btn-sm {% if seguidor.usuario.username in seguidos_usernames %}bg-greylight text-grey-700{% else %}bg-current text-white{% endif %} rounded-xl font-xsssss fw-600 px-3">
+                                                        {% if seguidor.usuario.username in seguidos_usernames %}Siguiendo{% else %}Seguir{% endif %}
+                                                    </a>
+                                                    {% endif %}
                                                 </div>
                                             </div>
-                                        </a>
+                                        </div>
+                                        {% endfor %}
                                     </div>
-                                    {% endfor %}
-                                </div>
-                                {% else %}
-                                <div class="text-center py-4">
-                                    <i class="feather-disc text-grey-300" style="font-size:40px;"></i>
-                                    <p class="font-xsss text-grey-500 mt-2 mb-0">
-                                        {% if es_propio %}Aún no has creado álbumes.{% else %}Este usuario no tiene álbumes públicos.{% endif %}
-                                    </p>
-                                    {% if es_propio %}
-                                    <a href="{% url 'crear_album' %}" class="btn bg-current text-white fw-600 font-xssss rounded-xl px-3 py-2 mt-2">
-                                        <i class="feather-plus me-1"></i>Crear mi primer álbum
-                                    </a>
+                                    {% else %}
+                                    <div class="text-center py-5">
+                                        <i class="feather-users text-grey-300" style="font-size:50px;"></i>
+                                        <p class="font-xsss text-grey-500 mt-3 mb-0">
+                                            {% if es_propio %}Aún no tienes seguidores.{% else %}Este usuario no tiene seguidores.{% endif %}
+                                        </p>
+                                    </div>
                                     {% endif %}
                                 </div>
-                                {% endif %}
                             </div>
 
-                            <div class="card w-100 shadow-xss rounded-xxl border-0 ps-4 pt-4 pe-4 pb-3 mb-3">
-                                <div class="card-body p-0">
-                                    <a href="#" class="font-xssss fw-600 text-grey-500 card-body p-0 d-flex align-items-center"><i class="btn-round-sm font-xs text-primary feather-edit-3 me-2 bg-greylight"></i>Crear publicación</a>
-                                </div>
-                                <div class="card-body p-0 mt-3 position-relative">
-                                    <figure class="avatar position-absolute ms-2 mt-1 top-5"><img src="{% static 'sociala/images/user-8.png' %}" alt="image" class="shadow-sm rounded-circle w30"></figure>
-                                    <textarea name="message" class="h100 bor-0 w-100 rounded-xxl p-2 ps-5 font-xssss text-grey-500 fw-500 border-light-md theme-dark-bg" cols="30" rows="10" placeholder="¿En qué estás pensando?"></textarea>
-                                </div>
-                                <div class="card-body d-flex p-0 mt-0">
-                                    <a href="#" class="d-flex align-items-center font-xssss fw-600 ls-1 text-grey-700 text-dark pe-4"><i class="font-md text-danger feather-video me-2"></i><span class="d-none-xs">Video en vivo</span></a>
-                                    <a href="#" class="d-flex align-items-center font-xssss fw-600 ls-1 text-grey-700 text-dark pe-4"><i class="font-md text-success feather-image me-2"></i><span class="d-none-xs">Foto/Video</span></a>
-                                    <a href="#" class="d-flex align-items-center font-xssss fw-600 ls-1 text-grey-700 text-dark pe-4"><i class="font-md text-warning feather-camera me-2"></i><span class="d-none-xs">Sentimiento/Actividad</span></a>
-                                    <a href="#" class="ms-auto" id="dropdownMenu8" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti-more-alt text-grey-900 btn-round-md bg-greylight font-xss"></i></a>
-                                    <div class="dropdown-menu dropdown-menu-end p-4 rounded-xxl border-0 shadow-lg" aria-labelledby="dropdownMenu8">
-                                        <div class="card-body p-0 d-flex">
-                                            <i class="feather-bookmark text-grey-500 me-3 font-lg"></i>
-                                            <h4 class="fw-600 text-grey-900 font-xssss mt-0 me-4">Guardar enlace <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Añadir a tus elementos guardados</span></h4>
-                                        </div>
-                                        <div class="card-body p-0 d-flex mt-2">
-                                            <i class="feather-alert-circle text-grey-500 me-3 font-lg"></i>
-                                            <h4 class="fw-600 text-grey-900 font-xssss mt-0 me-4">Ocultar publicación <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Guardar en guardados</span></h4>
-                                        </div>
-                                        <div class="card-body p-0 d-flex mt-2">
-                                            <i class="feather-alert-octagon text-grey-500 me-3 font-lg"></i>
-                                            <h4 class="fw-600 text-grey-900 font-xssss mt-0 me-4">Ocultar todo del grupo <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Guardar en guardados</span></h4>
-                                        </div>
-                                        <div class="card-body p-0 d-flex mt-2">
-                                            <i class="feather-lock text-grey-500 me-3 font-lg"></i>
-                                            <h4 class="fw-600 mb-0 text-grey-900 font-xssss mt-0 me-4">Dejar de seguir el grupo <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Guardar en guardados</span></h4>
-                                        </div>
+                            <!-- TAB: Siguiendo -->
+                            <div id="tab-siguiendo" class="tab-panel" style="display:none;">
+                                <div class="card w-100 shadow-xss rounded-xxl border-0 p-4 mb-3 mt-3">
+                                    <div class="card-body p-0 mb-3">
+                                        <h4 class="fw-700 font-xss text-grey-900 mb-0"><i class="feather-user-check text-current me-2"></i>Siguiendo <span class="font-xssss text-grey-500 fw-500">({{ perfil_visto.num_siguiendo }})</span></h4>
                                     </div>
-                                </div>
-                            </div>
-
-                            <div class="card w-100 shadow-xss rounded-xxl border-0 p-4 mb-3">
-                                <div class="card-body p-0 d-flex">
-                                    <figure class="avatar me-3"><img src="{% static 'sociala/images/user-7.png' %}" alt="image" class="shadow-sm rounded-circle w45"></figure>
-                                    <h4 class="fw-700 text-grey-900 font-xssss mt-1">Anthony Daugloi <span class="d-block font-xssss fw-500 mt-1 lh-3 text-grey-500">hace 3 horas</span></h4>
-                                    <a href="#" class="ms-auto" id="dropdownMenu7" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti-more-alt text-grey-900 btn-round-md bg-greylight font-xss"></i></a>
-                                    <div class="dropdown-menu dropdown-menu-end p-4 rounded-xxl border-0 shadow-lg" aria-labelledby="dropdownMenu7">
-                                        <div class="card-body p-0 d-flex">
-                                            <i class="feather-bookmark text-grey-500 me-3 font-lg"></i>
-                                            <h4 class="fw-600 text-grey-900 font-xssss mt-0 me-4">Guardar enlace <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Añadir a tus elementos guardados</span></h4>
+                                    {% if lista_siguiendo %}
+                                    <div class="row">
+                                        {% for perfil_s in lista_siguiendo %}
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card border-0 shadow-xss rounded-xl p-3">
+                                                <div class="d-flex align-items-center">
+                                                    <a href="{% url 'pagina_usuario' perfil_s.usuario.username %}">
+                                                        {% if perfil_s.foto %}
+                                                        <img src="{{ perfil_s.foto.url }}" class="rounded-circle me-3" style="width:50px;height:50px;object-fit:cover;" alt="">
+                                                        {% elif perfil_s.get_foto %}
+                                                        <img src="{{ perfil_s.get_foto }}" class="rounded-circle me-3" style="width:50px;height:50px;object-fit:cover;" alt="">
+                                                        {% else %}
+                                                        <img src="{% static 'sociala/images/user-12.png' %}" class="rounded-circle me-3" style="width:50px;height:50px;object-fit:cover;" alt="">
+                                                        {% endif %}
+                                                    </a>
+                                                    <div class="flex-grow-1">
+                                                        <a href="{% url 'pagina_usuario' perfil_s.usuario.username %}" class="fw-700 font-xsss text-grey-900 text-decoration-none">{{ perfil_s.nombre_completo }}</a>
+                                                        <span class="d-block font-xsssss text-grey-500">{{ perfil_s.num_seguidores }} seguidores</span>
+                                                    </div>
+                                                    {% if perfil_s.usuario != user %}
+                                                    <a href="{% url 'toggle_seguir' perfil_s.usuario.username %}" class="btn btn-sm bg-greylight text-grey-700 rounded-xl font-xsssss fw-600 px-3">Siguiendo</a>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="card-body p-0 d-flex mt-2">
-                                            <i class="feather-alert-circle text-grey-500 me-3 font-lg"></i>
-                                            <h4 class="fw-600 text-grey-900 font-xssss mt-0 me-4">Ocultar publicación <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Guardar en guardados</span></h4>
-                                        </div>
-                                        <div class="card-body p-0 d-flex mt-2">
-                                            <i class="feather-alert-octagon text-grey-500 me-3 font-lg"></i>
-                                            <h4 class="fw-600 text-grey-900 font-xssss mt-0 me-4">Ocultar todo del grupo <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Guardar en guardados</span></h4>
-                                        </div>
-                                        <div class="card-body p-0 d-flex mt-2">
-                                            <i class="feather-lock text-grey-500 me-3 font-lg"></i>
-                                            <h4 class="fw-600 mb-0 text-grey-900 font-xssss mt-0 me-4">Dejar de seguir el grupo <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Guardar en guardados</span></h4>
-                                        </div>
+                                        {% endfor %}
                                     </div>
-                                </div>
-                                <div class="card-body p-0 me-lg-5">
-                                    <p class="fw-500 text-grey-500 lh-26 font-xssss w-100">Compartiendo música y momentos especiales con todos ustedes. ¡La música une a las personas! <a href="#" class="fw-600 text-primary ms-2">Ver más</a></p>
-                                </div>
-                                <div class="card-body d-block p-0">
-                                    <div class="row ps-2 pe-2">
-                                        <div class="col-xs-4 col-sm-4 p-1"><a href="{% static 'sociala/images/t-10.jpg' %}" data-lightbox="roadtrip"><img src="{% static 'sociala/images/t-10.jpg' %}" class="rounded-3 w-100" alt="image"></a></div>
-                                        <div class="col-xs-4 col-sm-4 p-1"><a href="{% static 'sociala/images/t-11.jpg' %}" data-lightbox="roadtrip"><img src="{% static 'sociala/images/t-11.jpg' %}" class="rounded-3 w-100" alt="image"></a></div>
-                                        <div class="col-xs-4 col-sm-4 p-1"><a href="{% static 'sociala/images/t-12.jpg' %}" data-lightbox="roadtrip" class="position-relative d-block"><img src="{% static 'sociala/images/t-12.jpg' %}" class="rounded-3 w-100" alt="image"><span class="img-count font-sm text-white ls-3 fw-600"><b>+2</b></span></a></div>
+                                    {% else %}
+                                    <div class="text-center py-5">
+                                        <i class="feather-user-plus text-grey-300" style="font-size:50px;"></i>
+                                        <p class="font-xsss text-grey-500 mt-3 mb-0">
+                                            {% if es_propio %}Aún no sigues a nadie.{% else %}Este usuario no sigue a nadie.{% endif %}
+                                        </p>
                                     </div>
-                                </div>
-                                <div class="card-body d-flex p-0 mt-3">
-                                    <a href="#" class="d-flex align-items-center fw-600 text-grey-900 text-dark lh-26 font-xssss me-3"><i class="feather-thumbs-up text-white bg-primary-gradiant me-1 btn-round-xs font-xss"></i> <i class="feather-heart text-white bg-red-gradiant me-2 btn-round-xs font-xss"></i>2.8K Me gusta</a>
-                                    <a href="#" class="d-flex align-items-center fw-600 text-grey-900 text-dark lh-26 font-xssss"><i class="feather-message-circle text-dark text-grey-900 btn-round-sm font-lg"></i>22 Comentarios</a>
-                                    <a href="#" class="ms-auto d-flex align-items-center fw-600 text-grey-900 text-dark lh-26 font-xssss"><i class="feather-share-2 text-grey-900 text-dark btn-round-sm font-lg"></i><span class="d-none-xs">Compartir</span></a>
-                                </div>
-                            </div>
-
-                            <div class="card w-100 shadow-xss rounded-xxl border-0 p-4 mb-0">
-                                <div class="card-body p-0 d-flex">
-                                    <figure class="avatar me-3"><img src="{% static 'sociala/images/user-8.png' %}" alt="image" class="shadow-sm rounded-circle w45"></figure>
-                                    <h4 class="fw-700 text-grey-900 font-xssss mt-1">Anthony Daugloi <span class="d-block font-xssss fw-500 mt-1 lh-3 text-grey-500">hace 2 horas</span></h4>
-                                    <a href="#" class="ms-auto" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti-more-alt text-grey-900 btn-round-md bg-greylight font-xss"></i></a>
-                                    <div class="dropdown-menu dropdown-menu-end p-4 rounded-xxl border-0 shadow-lg" aria-labelledby="dropdownMenu2">
-                                        <div class="card-body p-0 d-flex">
-                                            <i class="feather-bookmark text-grey-500 me-3 font-lg"></i>
-                                            <h4 class="fw-600 text-grey-900 font-xssss mt-0 me-4">Guardar enlace <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Añadir a tus elementos guardados</span></h4>
-                                        </div>
-                                        <div class="card-body p-0 d-flex mt-2">
-                                            <i class="feather-alert-circle text-grey-500 me-3 font-lg"></i>
-                                            <h4 class="fw-600 text-grey-900 font-xssss mt-0 me-4">Ocultar publicación <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Guardar en guardados</span></h4>
-                                        </div>
-                                        <div class="card-body p-0 d-flex mt-2">
-                                            <i class="feather-alert-octagon text-grey-500 me-3 font-lg"></i>
-                                            <h4 class="fw-600 text-grey-900 font-xssss mt-0 me-4">Ocultar todo del grupo <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Guardar en guardados</span></h4>
-                                        </div>
-                                        <div class="card-body p-0 d-flex mt-2">
-                                            <i class="feather-lock text-grey-500 me-3 font-lg"></i>
-                                            <h4 class="fw-600 mb-0 text-grey-900 font-xssss mt-0 me-4">Dejar de seguir el grupo <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Guardar en guardados</span></h4>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-body p-0 me-lg-5">
-                                    <p class="fw-500 text-grey-500 lh-26 font-xssss w-100">Explorando nuevos géneros musicales este fin de semana. ¡La variedad es la sal de la vida! <a href="#" class="fw-600 text-primary ms-2">Ver más</a></p>
-                                </div>
-                                <div class="card-body d-flex p-0">
-                                    <a href="#" class="d-flex align-items-center fw-600 text-grey-900 text-dark lh-26 font-xssss me-3"><i class="feather-thumbs-up text-white bg-primary-gradiant me-1 btn-round-xs font-xss"></i> <i class="feather-heart text-white bg-red-gradiant me-2 btn-round-xs font-xss"></i>2.8K Me gusta</a>
-                                    <a href="#" class="d-flex align-items-center fw-600 text-grey-900 text-dark lh-26 font-xssss"><i class="feather-message-circle text-dark text-grey-900 btn-round-sm font-lg"></i>22 Comentarios</a>
-                                    <a href="#" class="ms-auto d-flex align-items-center fw-600 text-grey-900 text-dark lh-26 font-xssss"><i class="feather-share-2 text-grey-900 text-dark btn-round-sm font-lg"></i><span class="d-none-xs">Compartir</span></a>
-                                </div>
-                            </div>
-
-                            <div class="card w-100 shadow-xss rounded-xxl border-0 p-4 mb-3 mt-3">
-                                <div class="card-body p-0 d-flex">
-                                    <figure class="avatar me-3"><img src="{% static 'sociala/images/user-8.png' %}" alt="image" class="shadow-sm rounded-circle w45"></figure>
-                                    <h4 class="fw-700 text-grey-900 font-xssss mt-1">Anthony Daugloi <span class="d-block font-xssss fw-500 mt-1 lh-3 text-grey-500">hace 2 horas</span></h4>
-                                    <a href="#" class="ms-auto" id="dropdownMenu5" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="ti-more-alt text-grey-900 btn-round-md bg-greylight font-xss"></i></a>
-                                    <div class="dropdown-menu dropdown-menu-end p-4 rounded-xxl border-0 shadow-lg" aria-labelledby="dropdownMenu5">
-                                        <div class="card-body p-0 d-flex">
-                                            <i class="feather-bookmark text-grey-500 me-3 font-lg"></i>
-                                            <h4 class="fw-600 text-grey-900 font-xssss mt-0 me-4">Guardar enlace <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Añadir a tus elementos guardados</span></h4>
-                                        </div>
-                                        <div class="card-body p-0 d-flex mt-2">
-                                            <i class="feather-alert-circle text-grey-500 me-3 font-lg"></i>
-                                            <h4 class="fw-600 text-grey-900 font-xssss mt-0 me-4">Ocultar publicación <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Guardar en guardados</span></h4>
-                                        </div>
-                                        <div class="card-body p-0 d-flex mt-2">
-                                            <i class="feather-alert-octagon text-grey-500 me-3 font-lg"></i>
-                                            <h4 class="fw-600 text-grey-900 font-xssss mt-0 me-4">Ocultar todo del grupo <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Guardar en guardados</span></h4>
-                                        </div>
-                                        <div class="card-body p-0 d-flex mt-2">
-                                            <i class="feather-lock text-grey-500 me-3 font-lg"></i>
-                                            <h4 class="fw-600 mb-0 text-grey-900 font-xssss mt-0 me-4">Dejar de seguir el grupo <span class="d-block font-xsssss fw-500 mt-1 lh-3 text-grey-500">Guardar en guardados</span></h4>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="card-body p-0 mb-3 rounded-3 overflow-hidden">
-                                    <a href="#" class="video-btn">
-                                        <video autoplay loop class="float-right w-100">
-                                            <source src="{% static 'sociala/images/v-2.mp4' %}" type="video/mp4">
-                                        </video>
-                                    </a>
-                                </div>
-                                <div class="card-body p-0 me-lg-5">
-                                    <p class="fw-500 text-grey-500 lh-26 font-xssss w-100 mb-2">Acabamos de lanzar algo increíble que cambiará la forma en que experimentamos la música juntos. ¡No te lo pierdas! <a href="#" class="fw-600 text-primary ms-2">Ver más</a></p>
-                                </div>
-                                <div class="card-body d-flex p-0">
-                                    <a href="#" class="d-flex align-items-center fw-600 text-grey-900 text-dark lh-26 font-xssss me-3"><i class="feather-thumbs-up text-white bg-primary-gradiant me-1 btn-round-xs font-xss"></i> <i class="feather-heart text-white bg-red-gradiant me-2 btn-round-xs font-xss"></i>2.8K Me gusta</a>
-                                    <a href="#" class="d-flex align-items-center fw-600 text-grey-900 text-dark lh-26 font-xssss"><i class="feather-message-circle text-dark text-grey-900 btn-round-sm font-lg"></i>22 Comentarios</a>
-                                    <a href="#" class="ms-auto d-flex align-items-center fw-600 text-grey-900 text-dark lh-26 font-xssss"><i class="feather-share-2 text-grey-900 text-dark btn-round-sm font-lg"></i><span class="d-none-xs">Compartir</span></a>
-                                </div>
-                            </div>
-
-                            <div class="card w-100 shadow-xss rounded-xxl border-0 p-4 mb-0">
-                                <div class="card-body p-0 d-flex">
-                                    <figure class="avatar me-3"><img src="{% static 'sociala/images/user-8.png' %}" alt="image" class="shadow-sm rounded-circle w45"></figure>
-                                    <h4 class="fw-700 text-grey-900 font-xssss mt-1">Anthony Daugloi <span class="d-block font-xssss fw-500 mt-1 lh-3 text-grey-500">hace 2 horas</span></h4>
-                                    <a href="#" class="ms-auto"><i class="ti-more-alt text-grey-900 btn-round-md bg-greylight font-xss"></i></a>
-                                </div>
-                                <div class="card-body p-0 me-lg-5">
-                                    <p class="fw-500 text-grey-500 lh-26 font-xssss w-100">Momentos únicos que solo la música puede crear. ¡Gracias por ser parte de esta comunidad! <a href="#" class="fw-600 text-primary ms-2">Ver más</a></p>
-                                </div>
-                                <div class="card-body d-block p-0 mb-3">
-                                    <div class="row ps-2 pe-2">
-                                        <div class="col-xs-6 col-sm-6 p-1"><a href="{% static 'sociala/images/t-21.jpg' %}" data-lightbox="roadtri"><img src="{% static 'sociala/images/t-21.jpg' %}" class="rounded-3 w-100" alt="image"></a></div>
-                                        <div class="col-xs-6 col-sm-6 p-1"><a href="{% static 'sociala/images/t-22.jpg' %}" data-lightbox="roadtri"><img src="{% static 'sociala/images/t-22.jpg' %}" class="rounded-3 w-100" alt="image"></a></div>
-                                    </div>
-                                    <div class="row ps-2 pe-2">
-                                        <div class="col-xs-4 col-sm-4 p-1"><a href="{% static 'sociala/images/t-23.jpg' %}" data-lightbox="roadtri"><img src="{% static 'sociala/images/t-23.jpg' %}" class="rounded-3 w-100" alt="image"></a></div>
-                                        <div class="col-xs-4 col-sm-4 p-1"><a href="{% static 'sociala/images/t-24.jpg' %}" data-lightbox="roadtri"><img src="{% static 'sociala/images/t-24.jpg' %}" class="rounded-3 w-100" alt="image"></a></div>
-                                        <div class="col-xs-4 col-sm-4 p-1"><a href="{% static 'sociala/images/t-25.jpg' %}" data-lightbox="roadtri" class="position-relative d-block"><img src="{% static 'sociala/images/t-25.jpg' %}" class="rounded-3 w-100" alt="image"><span class="img-count font-sm text-white ls-3 fw-600"><b>+2</b></span></a></div>
-                                    </div>
-                                </div>
-                                <div class="card-body d-flex p-0">
-                                    <a href="#" class="d-flex align-items-center fw-600 text-grey-900 text-dark lh-26 font-xssss me-3"><i class="feather-thumbs-up text-white bg-primary-gradiant me-1 btn-round-xs font-xss"></i> <i class="feather-heart text-white bg-red-gradiant me-2 btn-round-xs font-xss"></i>2.8K Me gusta</a>
-                                    <a href="#" class="d-flex align-items-center fw-600 text-grey-900 text-dark lh-26 font-xssss"><i class="feather-message-circle text-dark text-grey-900 btn-round-sm font-lg"></i>22 Comentarios</a>
-                                    <a href="#" class="ms-auto d-flex align-items-center fw-600 text-grey-900 text-dark lh-26 font-xssss"><i class="feather-share-2 text-grey-900 text-dark btn-round-sm font-lg"></i><span class="d-none-xs">Compartir</span></a>
+                                    {% endif %}
                                 </div>
                             </div>
 
@@ -439,8 +327,21 @@
         </form>
     </div>
 </div>
+{% endif %}
 
 <script>
+/* Tabs */
+document.querySelectorAll('.tab-link').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        document.querySelectorAll('.tab-link').forEach(function(l) { l.classList.remove('active'); });
+        this.classList.add('active');
+        document.querySelectorAll('.tab-panel').forEach(function(p) { p.style.display = 'none'; });
+        document.getElementById(this.dataset.tab).style.display = 'block';
+    });
+});
+
+/* Modales */
 function abrirModal(id) {
     document.getElementById(id).style.display = 'block';
     document.body.style.overflow = 'hidden';
@@ -455,12 +356,9 @@ function cerrarModalFondo(e, id) {
 function previewModal(input, previewId) {
     if (!input.files || !input.files[0]) return;
     var reader = new FileReader();
-    reader.onload = function(e) {
-        document.getElementById(previewId).src = e.target.result;
-    };
+    reader.onload = function(ev) { document.getElementById(previewId).src = ev.target.result; };
     reader.readAsDataURL(input.files[0]);
 }
 </script>
-{% endif %}
 
 {% endblock %}

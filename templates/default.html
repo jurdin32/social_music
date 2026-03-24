@@ -112,4 +112,61 @@
 
             </div>
         </div>
+
+<script>
+(function() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    const ws = new WebSocket(proto + '://' + location.host + '/ws/feed/');
+    const feedContainer = document.querySelector('.col-xl-8.col-xxl-9.col-lg-8');
+    const defaultImg = "{% static 'sociala/images/user-12.png' %}";
+
+    ws.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        if (data.event === 'nuevo_album') {
+            // Eliminar mensaje de "feed vacío" si existe
+            const empty = feedContainer.querySelector('.text-center.py-5');
+            if (empty) empty.closest('.card').remove();
+
+            const portadaHtml = data.portada
+                ? '<img src="' + data.portada + '" class="position-absolute top-0 start-0 w-100 h-100" style="object-fit:cover;" alt="' + data.titulo + '">'
+                : '<div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-greylight"><i class="feather-disc text-grey-400" style="font-size:50px;"></i></div>';
+
+            const card = document.createElement('div');
+            card.className = 'card w-100 shadow-xss rounded-xxl border-0 p-4 mb-3';
+            card.style.animation = 'fadeInDown 0.5s ease';
+            card.innerHTML = `
+                <div class="card-body p-0 d-flex align-items-center">
+                    <figure class="avatar me-3 m-0">
+                        <a href="/usuario/${data.artista_username}/"><img src="${defaultImg}" class="shadow-sm rounded-circle w45"></a>
+                    </figure>
+                    <h4 class="fw-700 text-grey-900 font-xssss mt-1">
+                        <a href="/usuario/${data.artista_username}/" class="text-grey-900 text-decoration-none">${data.artista_nombre}</a>
+                        <span class="d-block font-xssss fw-500 mt-1 lh-3 text-grey-500">publicó un álbum &middot; justo ahora</span>
+                    </h4>
+                </div>
+                <a href="/albumes/${data.album_id}/" class="text-decoration-none">
+                    <div class="card-body p-0 mt-3">
+                        <div class="row g-0 rounded-xxl overflow-hidden shadow-xss">
+                            <div class="col-4 position-relative" style="min-height:180px;">${portadaHtml}</div>
+                            <div class="col-8 d-flex flex-column justify-content-center p-3">
+                                <span class="badge bg-current text-white font-xsssss fw-600 rounded-xl px-2 py-1 mb-2" style="width:fit-content;">${data.genero}</span>
+                                <h3 class="fw-700 font-xss text-grey-900 mb-1">${data.titulo}</h3>
+                                <p class="font-xsssss text-grey-500 mb-1"><i class="feather-music me-1"></i>${data.num_canciones} canciones <span class="ms-2"><i class="feather-clock me-1"></i>${data.duracion}</span></p>
+                                ${data.descripcion ? '<p class="font-xsssss text-grey-500 mb-0">' + data.descripcion + '</p>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                <div class="card-body d-flex p-0 mt-3">
+                    <a href="/albumes/${data.album_id}/" class="d-flex align-items-center fw-600 text-grey-900 lh-26 font-xssss"><i class="feather-headphones text-current btn-round-sm font-lg me-1"></i><span>Escuchar</span></a>
+                    <a href="/usuario/${data.artista_username}/" class="ms-auto d-flex align-items-center fw-600 text-grey-500 lh-26 font-xssss"><i class="feather-user me-1"></i>Ver perfil</a>
+                </div>`;
+            feedContainer.insertBefore(card, feedContainer.firstChild);
+        }
+    };
+})();
+</script>
+<style>
+@keyframes fadeInDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+</style>
 {% endblock %}

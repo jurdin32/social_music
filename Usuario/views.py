@@ -51,6 +51,8 @@ def editar_perfil(request):
         if form.is_valid():
             form.save()
             form.save_user(request.user)
+            from .ws_events import notificar_perfil_actualizado
+            notificar_perfil_actualizado(request.user)
             return redirect('pagina_usuario', username=request.user.username)
     else:
         form = EditarPerfilForm(instance=perfil_obj, user=request.user)
@@ -120,6 +122,8 @@ def actualizar_imagen(request):
         elif campo == 'portada' and 'portada' in request.FILES:
             perfil_obj.portada = request.FILES['portada']
             perfil_obj.save()
+        from .ws_events import notificar_perfil_actualizado
+        notificar_perfil_actualizado(request.user)
     return redirect('pagina_usuario', username=request.user.username)
 
 
@@ -142,6 +146,13 @@ def pagina_usuario(request, username):
     else:
         form = EditarPerfilForm(instance=perfil_obj, user=request.user) if es_propio else None
     albumes = usuario_obj.albumes.all() if es_propio else usuario_obj.albumes.filter(es_publico=True)
+    # Seguidores y siguiendo (perfiles)
+    lista_seguidores = perfil_obj.seguidores.select_related('usuario').all()
+    lista_siguiendo = Perfil.objects.filter(seguidores=perfil_obj).select_related('usuario')
+    total_canciones = sum(a.num_canciones() for a in albumes)
+    # Usernames que yo sigo (para botones Seguir/Siguiendo en la lista)
+    mis_seguidos = Perfil.objects.filter(seguidores=mi_perfil).select_related('usuario')
+    seguidos_usernames = [p.usuario.username for p in mis_seguidos]
     contexto = {
         'user': request.user,
         'perfil_visto': perfil_obj,
@@ -150,6 +161,10 @@ def pagina_usuario(request, username):
         'ya_sigo': ya_sigo,
         'form': form,
         'albumes': albumes,
+        'lista_seguidores': lista_seguidores,
+        'lista_siguiendo': lista_siguiendo,
+        'total_canciones': total_canciones,
+        'seguidos_usernames': seguidos_usernames,
     }
     return render(request, 'user-page.html', contexto)
 
@@ -177,6 +192,9 @@ def crear_album(request):
             album = form.save(commit=False)
             album.artista = request.user
             album.save()
+            if album.es_publico:
+                from .ws_events import notificar_nuevo_album
+                notificar_nuevo_album(album)
             return redirect('agregar_cancion', album_id=album.pk)
     else:
         form = AlbumForm()
@@ -319,6 +337,10 @@ def toggle_seguir(request, username):
     perfil_objetivo, _ = Perfil.objects.get_or_create(usuario=usuario_objetivo)
     if perfil_objetivo.seguidores.filter(pk=mi_perfil.pk).exists():
         perfil_objetivo.seguidores.remove(mi_perfil)
+        ahora_sigue = False
     else:
         perfil_objetivo.seguidores.add(mi_perfil)
+        ahora_sigue = True
+    from .ws_events import notificar_follow
+    notificar_follow(request.user, usuario_objetivo, ahora_sigue)
     return redirect('pagina_usuario', username=username)
