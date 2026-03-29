@@ -33,6 +33,7 @@
                                         {% if es_propio %}
                                         <a href="{% url 'editar_perfil' %}" class="d-none d-lg-block bg-primary p-3 z-index-1 rounded-3 text-white font-xsssss text-uppercase fw-700 ls-3">Editar perfil</a>
                                         {% else %}
+                                        <a href="{% url 'chat_conversacion' usuario_visto.username %}" class="d-none d-lg-block bg-current p-3 z-index-1 rounded-3 text-white font-xsssss text-uppercase fw-700 ls-3 me-2"><i class="feather-message-circle me-1"></i>Mensaje</a>
                                         <a href="{% url 'toggle_seguir' usuario_visto.username %}" class="d-none d-lg-block {% if ya_sigo %}bg-greylight text-grey-700{% else %}bg-success text-white{% endif %} p-3 z-index-1 rounded-3 font-xsssss text-uppercase fw-700 ls-3">
                                             {% if ya_sigo %}<i class="feather-user-check me-1"></i>Siguiendo{% else %}<i class="feather-user-plus me-1"></i>Seguir{% endif %}
                                         </a>
@@ -250,6 +251,7 @@
                                                         <span class="d-block font-xsssss text-grey-500">{{ seguidor.num_seguidores }} seguidores</span>
                                                     </div>
                                                     {% if seguidor.usuario != user %}
+                                                    <a href="{% url 'chat_conversacion' seguidor.usuario.username %}" class="btn btn-sm btn-outline-primary rounded-xl font-xsssss fw-600 px-2 me-1" title="Mensaje"><i class="feather-message-circle"></i></a>
                                                     <a href="{% url 'toggle_seguir' seguidor.usuario.username %}" class="btn btn-sm {% if seguidor.usuario.username in seguidos_usernames %}bg-greylight text-grey-700{% else %}bg-current text-white{% endif %} rounded-xl font-xsssss fw-600 px-3">
                                                         {% if seguidor.usuario.username in seguidos_usernames %}Siguiendo{% else %}Seguir{% endif %}
                                                     </a>
@@ -296,6 +298,7 @@
                                                         <span class="d-block font-xsssss text-grey-500">{{ perfil_s.num_seguidores }} seguidores</span>
                                                     </div>
                                                     {% if perfil_s.usuario != user %}
+                                                    <a href="{% url 'chat_conversacion' perfil_s.usuario.username %}" class="btn btn-sm btn-outline-primary rounded-xl font-xsssss fw-600 px-2 me-1" title="Mensaje"><i class="feather-message-circle"></i></a>
                                                     <a href="{% url 'toggle_seguir' perfil_s.usuario.username %}" class="btn btn-sm bg-greylight text-grey-700 rounded-xl font-xsssss fw-600 px-3">Siguiendo</a>
                                                     {% endif %}
                                                 </div>

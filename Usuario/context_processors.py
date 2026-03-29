@@ -33,6 +33,7 @@ def notificaciones_ctx(request):
 
     # ── Contactos sidebar (seguidos + seguidores) ────────────────────────
     contactos_sidebar = []
+    usuarios_sugeridos = []
     try:
         mi_perfil = request.user.perfil
         # Usuarios que yo sigo (perfiles que tienen mi_perfil en sus seguidores)
@@ -54,6 +55,16 @@ def notificaciones_ctx(request):
         contactos_sidebar = sorted(
             [{'usuario': u, 'online': u.id in online_ids} for u in contactos_usuarios],
             key=lambda c: not c['online'],
+        )
+        # Usuarios sugeridos: no los sigo ni me siguen, max 5
+        from django.db.models import Count
+        excluir_ids = (siguiendo_ids | seguidores_ids | {request.user.id})
+        usuarios_sugeridos = list(
+            User.objects
+            .exclude(id__in=excluir_ids)
+            .select_related('perfil')
+            .annotate(total_seg=Count('perfil__seguidores'))
+            .order_by('-total_seg')[:5]
         )
     except Exception:
         pass
@@ -125,6 +136,7 @@ def notificaciones_ctx(request):
         'notificaciones_no_leidas': no_leidas,
         'contactos_sidebar': contactos_sidebar,
         'contactos_online_count': sum(1 for c in contactos_sidebar if c['online']),
+        'usuarios_sugeridos': usuarios_sugeridos,
         'online_users_ids': online_ids,
         'mensajes_no_leidos': mensajes_no_leidos,
         'conversaciones_recientes': conversaciones_recientes,

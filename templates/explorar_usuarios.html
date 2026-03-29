@@ -55,14 +55,20 @@
                             <span><strong>{{ p.num_siguiendo }}</strong> siguiendo</span>
                         </div>
                         {% if p.usuario != user %}
-                        <a href="{% url 'toggle_seguir' p.usuario.username %}"
-                           class="btn btn-sm mt-2 w-100 {% if p.usuario.username in mis_seguidos_usernames %}btn-light text-grey-700{% else %}btn-primary text-white{% endif %}">
-                            {% if p.usuario.username in mis_seguidos_usernames %}
-                            <i class="feather-check me-1"></i>Siguiendo
-                            {% else %}
-                            <i class="feather-user-plus me-1"></i>Seguir
-                            {% endif %}
-                        </a>
+                        <div class="d-flex gap-2 mt-2 w-100">
+                            <a href="{% url 'toggle_seguir' p.usuario.username %}"
+                               class="btn btn-sm flex-grow-1 {% if p.usuario.username in mis_seguidos_usernames %}btn-light text-grey-700{% else %}btn-primary text-white{% endif %}">
+                                {% if p.usuario.username in mis_seguidos_usernames %}
+                                <i class="feather-check me-1"></i>Siguiendo
+                                {% else %}
+                                <i class="feather-user-plus me-1"></i>Seguir
+                                {% endif %}
+                            </a>
+                            <a href="{% url 'chat_conversacion' p.usuario.username %}"
+                               class="btn btn-sm btn-outline-primary" title="Enviar mensaje">
+                                <i class="feather-message-circle"></i>
+                            </a>
+                        </div>
                         {% endif %}
                     </div>
                 </div>

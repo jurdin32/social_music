@@ -613,6 +613,37 @@
                     {% endfor %}
                     {% endif %}
                     </ul>
+
+                    {% if usuarios_sugeridos %}
+                    <div class="border-top pt-3 mt-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h4 class="font-xsssss text-grey-500 text-uppercase fw-700 ls-3 mb-0">Sugeridos</h4>
+                            <a href="{% url 'explorar_usuarios' %}" class="font-xsssss fw-600 text-primary text-decoration-none">Ver todos</a>
+                        </div>
+                        <ul class="list-group list-group-flush">
+                        {% for sug in usuarios_sugeridos %}
+                            <li class="bg-transparent list-group-item no-icon pe-0 ps-0 pt-2 pb-2 border-0 d-flex align-items-center">
+                                <figure class="avatar float-left mb-0 me-2">
+                                    <a href="{% url 'pagina_usuario' sug.username %}">
+                                    {% if sug.perfil.foto %}
+                                        <img src="{{ sug.perfil.foto.url }}" alt="{{ sug.username }}" class="w35 rounded-circle" style="object-fit:cover;" onerror="this.onerror=null;this.src='/static/sociala/images/user-12.png';">
+                                    {% elif sug.socialaccount_set.all %}
+                                        <img src="{{ sug.socialaccount_set.all.0.get_avatar_url }}" alt="{{ sug.username }}" class="w35 rounded-circle">
+                                    {% else %}
+                                        <span class="btn-round-sm bg-primary-gradiant text-white fw-700 font-xssss d-flex align-items-center justify-content-center" style="width:35px;height:35px;border-radius:50%;">{{ sug.username|slice:":1"|upper }}</span>
+                                    {% endif %}
+                                    </a>
+                                </figure>
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <a href="{% url 'pagina_usuario' sug.username %}" class="font-xssss fw-700 text-grey-900 d-block text-truncate text-decoration-none">{{ sug.perfil.nombre_completo }}</a>
+                                    <span class="font-xsssss text-grey-500">@{{ sug.username }}</span>
+                                </div>
+                                <a href="{% url 'toggle_seguir' sug.username %}" class="btn btn-sm btn-primary rounded-xl font-xsssss fw-600 px-2 py-1">Seguir</a>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
                 </div>
 
             </div>

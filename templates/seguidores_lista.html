@@ -37,10 +37,13 @@
                             {% endif %}
                         </div>
                         {% if p.usuario != user %}
-                        <a href="{% url 'toggle_seguir' p.usuario.username %}"
-                           class="btn btn-sm {% if p.usuario.username in mis_seguidos_usernames %}btn-light text-grey-700{% else %}btn-primary text-white{% endif %}">
-                            {% if p.usuario.username in mis_seguidos_usernames %}Siguiendo{% else %}Seguir{% endif %}
-                        </a>
+                        <div class="d-flex gap-1">
+                            <a href="{% url 'chat_conversacion' p.usuario.username %}" class="btn btn-sm btn-outline-primary" title="Mensaje"><i class="feather-message-circle"></i></a>
+                            <a href="{% url 'toggle_seguir' p.usuario.username %}"
+                               class="btn btn-sm {% if p.usuario.username in mis_seguidos_usernames %}btn-light text-grey-700{% else %}btn-primary text-white{% endif %}">
+                                {% if p.usuario.username in mis_seguidos_usernames %}Siguiendo{% else %}Seguir{% endif %}
+                            </a>
+                        </div>
                         {% endif %}
                     </div>
                 </div>
