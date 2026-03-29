@@ -470,7 +470,7 @@
 
 
         <!-- navigation left -->
-
+        <div class="nav-overlay" id="nav-overlay"></div>
         {% include 'includes/nav_lateral.html' %}
 
         <!-- navigation left -->
@@ -667,13 +667,13 @@
 
             <a href="/" class="nav-content-bttn nav-center"><i class="feather-home"></i></a>
 
-            <a href="#" class="nav-content-bttn"><i class="feather-package"></i></a>
+            <a href="{% url 'explorar_usuarios' %}" class="nav-content-bttn"><i class="feather-search"></i></a>
 
             <a href="{% url 'historias' %}" class="nav-content-bttn" data-tab="chats"><i class="feather-layout"></i></a>            
 
-            <a href="#" class="nav-content-bttn"><i class="feather-layers"></i></a>
+            <a href="{% url 'chat_inbox' %}" class="nav-content-bttn"><i class="feather-message-circle"></i></a>
 
-            <a href="{% url 'perfil' %}" class="nav-content-bttn">{% if user.is_authenticated and user.perfil.foto %}<img src="{{ user.perfil.foto.url }}" alt="user" class="w30 shadow-xss rounded-circle" style="object-fit:cover;">{% elif user.is_authenticated and user.socialaccount_set.all %}<img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="user" class="w30 shadow-xss rounded-circle">{% else %}<img src="{% static 'sociala/images/female-profile.png' %}" alt="user" class="w30 shadow-xss">{% endif %}</a>
+            <a href="{% url 'perfil' %}" class="nav-content-bttn">{% if user.is_authenticated and user.perfil.foto %}<img src="{{ user.perfil.foto.url }}" alt="user" class="w30 shadow-xss rounded-circle" style="width:30px;height:30px;object-fit:cover;">{% elif user.is_authenticated and user.socialaccount_set.all %}<img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="user" class="w30 shadow-xss rounded-circle" style="width:30px;height:30px;object-fit:cover;">{% else %}<img src="{% static 'sociala/images/female-profile.png' %}" alt="user" class="w30 shadow-xss rounded-circle" style="width:30px;height:30px;object-fit:cover;">{% endif %}</a>
 
         </div>
 
@@ -847,7 +847,7 @@
         transition: width .2s ease;
     }
 
-    /* Evita texto en columna (h\nn\no\nl\na) en mobile */
+    /* Evita texto en columna (h\nn\no\ol\na) en mobile */
     @media (max-width: 991.98px) {
         .main-content .middle-sidebar-bottom {
             padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
@@ -875,6 +875,44 @@
             word-break: normal !important;
             overflow-wrap: break-word !important;
             white-space: normal !important;
+        }
+        /* ── Fix: desactivar menu-active (sidebar colapsado) en móvil ── */
+        .navigation.menu-active {
+            width: 280px !important;
+        }
+        .navigation.menu-active .nav-content {
+            width: 100% !important;
+            padding-left: 15px !important;
+            padding-right: 15px !important;
+        }
+        .navigation.menu-active .nav-content ul li > a span {
+            margin-left: 0 !important;
+            display: inline !important;
+        }
+        .navigation.menu-active .card,
+        .navigation.menu-active .nav-caption span,
+        .navigation.menu-active .nav-content ul li > a span.circle-count,
+        .navigation.menu-active .nav-top a .logo-text {
+            display: inherit !important;
+        }
+        /* Backdrop oscuro al abrir sidebar en móvil */
+        .nav-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,.45);
+            z-index: 999;
+        }
+        .nav-overlay.active { display: block; }
+        /* Avatar en app-footer */
+        .app-footer .nav-content-bttn img {
+            width: 30px !important;
+            height: 30px !important;
+            object-fit: cover;
+            border-radius: 50% !important;
         }
     }
 
@@ -1609,6 +1647,39 @@
     <script src="{% static 'sociala/js/lightbox.js' %}"></script>
 
     <script src="{% static 'sociala/js/scripts.js' %}"></script>
+
+    <!-- Mobile: overlay + cierre sidebar al tocar fuera -->
+    <script>
+    (function(){
+        var overlay = document.getElementById('nav-overlay');
+        if (!overlay) return;
+        // Abrir overlay cuando sidebar se abre
+        var btn = document.querySelector('.nav-menu');
+        if (btn) {
+            btn.addEventListener('click', function(){
+                var nav = document.querySelector('.navigation');
+                if (nav && nav.classList.contains('nav-active')) {
+                    overlay.classList.add('active');
+                } else {
+                    overlay.classList.remove('active');
+                }
+            });
+        }
+        // Cerrar sidebar al tocar overlay
+        overlay.addEventListener('click', function(){
+            var nav = document.querySelector('.navigation');
+            if (nav) nav.classList.remove('nav-active');
+            if (btn) btn.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+        // También cerrar con close-nav
+        document.querySelectorAll('.close-nav').forEach(function(el){
+            el.addEventListener('click', function(){
+                overlay.classList.remove('active');
+            });
+        });
+    })();
+    </script>
 
     {% if user.is_authenticated %}
     <script>
