@@ -92,15 +92,15 @@
 
                         <div class="form-group mb-3">
                             <div class="code-boxes">
-                                <input type="text" class="code-box" data-idx="0" maxlength="1" inputmode="text" autocomplete="off">
-                                <input type="text" class="code-box" data-idx="1" maxlength="1" inputmode="text" autocomplete="off">
-                                <input type="text" class="code-box" data-idx="2" maxlength="1" inputmode="text" autocomplete="off">
-                                <input type="text" class="code-box" data-idx="3" maxlength="1" inputmode="text" autocomplete="off">
+                                <input type="text" class="code-box" data-idx="0" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                                <input type="text" class="code-box" data-idx="1" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                                <input type="text" class="code-box" data-idx="2" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                                <input type="text" class="code-box" data-idx="3" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
                                 <span class="code-separator">—</span>
-                                <input type="text" class="code-box" data-idx="4" maxlength="1" inputmode="text" autocomplete="off">
-                                <input type="text" class="code-box" data-idx="5" maxlength="1" inputmode="text" autocomplete="off">
-                                <input type="text" class="code-box" data-idx="6" maxlength="1" inputmode="text" autocomplete="off">
-                                <input type="text" class="code-box" data-idx="7" maxlength="1" inputmode="text" autocomplete="off">
+                                <input type="text" class="code-box" data-idx="4" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                                <input type="text" class="code-box" data-idx="5" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                                <input type="text" class="code-box" data-idx="6" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
+                                <input type="text" class="code-box" data-idx="7" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="off">
                             </div>
 
                             {% if verify_form.code.errors %}
@@ -169,7 +169,7 @@
         function updateHidden() {
             var code = '';
             boxes.forEach(function(b, i) {
-                code += b.value.toUpperCase();
+                code += b.value;
                 if (i === 3) code += '-';
             });
             hidden.value = code;
@@ -196,8 +196,8 @@
             });
 
             box.addEventListener('input', function() {
-                var val = this.value.replace(/[^a-zA-Z0-9]/g, '');
-                this.value = val.charAt(0).toUpperCase();
+                var val = this.value.replace(/[^0-9]/g, '');
+                this.value = val.charAt(0);
                 updateHidden();
                 if (val && idx < boxes.length - 1) {
                     boxes[idx + 1].focus();
