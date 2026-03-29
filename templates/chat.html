@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chat{% endblock %}
+
+{% block content %}
+<style>
+    .chat-inbox-list { list-style: none; margin: 0; padding: 0; }
+    .chat-inbox-item { border-bottom: 1px solid #f1f1f1; }
+    .chat-inbox-item:last-child { border-bottom: 0; }
+    .chat-inbox-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        text-decoration: none;
+    }
+    .chat-avatar-wrap { width: 45px; min-width: 45px; position: relative; }
+    .chat-avatar-wrap img,
+    .chat-avatar-wrap .chat-avatar-fallback {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        object-fit: cover;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .chat-inbox-main {
+        flex: 1;
+        min-width: 0;
+    }
+    .chat-inbox-name-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .chat-inbox-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: #121826;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .chat-inbox-preview,
+    .chat-inbox-time {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .chat-inbox-preview { font-size: 12px; color: #7f8da3; margin-top: 2px; }
+    .chat-inbox-time { font-size: 11px; color: #a0a9b8; margin-top: 1px; }
+    .chat-inbox-actions { color: #b4bcc9; padding-left: 6px; }
+
+    @media (max-width: 575.98px) {
+        .chat-wrapper { padding: 10px !important; }
+        .chat-inbox-link { padding: 10px 8px; gap: 10px; }
+        .chat-inbox-name { font-size: 13px; }
+        .chat-inbox-preview { font-size: 11px; }
+        .chat-inbox-time { font-size: 10px; }
+    }
+</style>
+<div class="row">
+    <div class="col-xl-12">
+        <div class="chat-wrapper p-3 w-100 position-relative scroll-bar bg-white theme-dark-bg">
+
+            <!-- Encabezado -->
+            <div class="d-flex align-items-center mb-4 mt-2">
+                <h2 class="fw-700 font-md text-grey-900 mb-0 d-flex align-items-center">
+                    Mensajes
+                    {% if mensajes_no_leidos %}
+                    <span class="circle-count bg-warning text-white font-xsssss rounded-3 ms-2 ls-3 fw-600 p-2 mt-0">
+                        {{ mensajes_no_leidos }}
+                    </span>
+                    {% endif %}
+                </h2>
+            </div>
+
+            {% if conversaciones %}
+            <ul class="chat-inbox-list">
+                {% for conv in conversaciones %}
+                <li class="chat-inbox-item">
+                    <a href="{% url 'chat_conversacion' conv.usuario.username %}"
+                       class="chat-inbox-link rounded-3 {% if conv.no_leidos %}bg-lightblue theme-light-bg{% endif %}">
+
+                        <!-- Avatar -->
+                        <div class="chat-avatar-wrap">
+                            {% if conv.usuario.perfil.foto %}
+                                <img src="{{ conv.usuario.perfil.foto.url }}"
+                                     alt="{{ conv.usuario.username }}"
+                                     class="w45 rounded-circle" style="object-fit:cover;">
+                            {% elif conv.usuario.socialaccount_set.all %}
+                                <img src="{{ conv.usuario.socialaccount_set.all.0.get_avatar_url }}"
+                                     alt="{{ conv.usuario.username }}"
+                                     class="w45 rounded-circle">
+                            {% else %}
+                                <span class="chat-avatar-fallback bg-primary-gradiant text-white fw-700 font-xss"
+                                      style="width:45px;height:45px;border-radius:50%;">
+                                    {{ conv.usuario.username|slice:":1"|upper }}
+                                </span>
+                            {% endif %}
+                            <!-- Punto online -->
+                            <span class="{% if conv.usuario.id in online_users_ids %}bg-success{% else %}bg-secondary{% endif %} btn-round-xss position-absolute"
+                                  id="online-dot-{{ conv.usuario.id }}"
+                                  style="bottom:0;right:0;width:10px;height:10px;border:2px solid white;border-radius:50%;"></span>
+                        </div>
+
+                        <!-- Info conversación -->
+                        <div class="chat-inbox-main">
+                            <div class="chat-inbox-name-row">
+                                <span class="chat-inbox-name">{{ conv.usuario.perfil.nombre_completo }}</span>
+                                {% if conv.no_leidos %}
+                                <span class="badge bg-warning text-white font-xsssss">{{ conv.no_leidos }}</span>
+                                {% endif %}
+                            </div>
+                            <span class="chat-inbox-preview">
+                                {% if conv.ultimo_mensaje.emisor == request.user %}
+                                <i class="feather-corner-up-right font-xsssss text-grey-400"></i>
+                                {% endif %}
+                                {{ conv.ultimo_mensaje.vista_previa|truncatechars:50 }}
+                            </span>
+                            <span class="chat-inbox-time">
+                                {{ conv.ultimo_mensaje.enviado|timesince }} atrás
+                            </span>
+                        </div>
+
+                        <i class="ti-more-alt chat-inbox-actions font-xs"></i>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+
+            {% else %}
+            <div class="text-center py-5">
+                <i class="feather-message-circle font-xl text-grey-300 d-block mb-3" style="font-size:3rem;"></i>
+                <h4 class="fw-600 text-grey-500 font-xsss">No tienes conversaciones aún</h4>
+                <p class="text-grey-400 font-xssss">Abre un chat desde el panel lateral o la página de un usuario</p>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

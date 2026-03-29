@@ -1,129 +1,377 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Usuarios - Veriffai{% endblock %}
+{% block title %}Comunidad Musical - Veriffai{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-xl-12">
-        <div class="card shadow-xss w-100 d-block d-flex border-0 p-4 mb-3">
-            <div class="card-body d-flex align-items-center p-0">
-                <h2 class="fw-700 mb-0 mt-0 font-md text-grey-900"><i class="feather-users text-current me-2"></i>Usuarios</h2>
+        <div class="card shadow-xss w-100 border-0 p-4 mb-3">
+            <div class="card-body d-flex align-items-center justify-content-between p-0 flex-wrap gap-2">
+                <h2 class="fw-700 mb-0 mt-0 font-md text-grey-900"><i class="feather-music text-current me-2"></i>Comunidad Musical</h2>
+                <span class="font-xssss text-grey-500">Crea grupos, organiza eventos e invita a otros artistas y compositores.</span>
             </div>
         </div>
 
-        <div class="row ps-2 pe-1" id="usuarios-grid">
-        </div>
-
-        <div id="loading-spinner" class="text-center py-4 d-none">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Cargando...</span>
+        <div class="row">
+            <div class="col-lg-6 pe-2 ps-2 mb-3" id="grupos-musicales">
+                <div class="card border-0 shadow-xss rounded-3 p-3 h-100">
+                    <h4 class="fw-700 font-xssss mb-2">Invitaciones a grupos</h4>
+                    {% if invitaciones_grupo %}
+                        {% for inv in invitaciones_grupo %}
+                        <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                            <div>
+                                <div class="fw-600 font-xssss text-grey-900">{{ inv.grupo.nombre }}</div>
+                                <div class="font-xss text-grey-500">Invita: {{ inv.invitador.username }}</div>
+                            </div>
+                            <form method="post" class="m-0">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="aceptar_inv_grupo">
+                                <input type="hidden" name="inv_id" value="{{ inv.id }}">
+                                <button type="submit" class="btn btn-sm btn-primary">Aceptar</button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="font-xss text-grey-500 mb-0">No tienes invitaciones pendientes a grupos.</p>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6 pe-2 ps-2 mb-3" id="eventos-musicales">
+                <div class="card border-0 shadow-xss rounded-3 p-3 h-100">
+                    <h4 class="fw-700 font-xssss mb-2">Invitaciones a eventos</h4>
+                    {% if invitaciones_evento %}
+                        {% for inv in invitaciones_evento %}
+                        <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                            <div>
+                                <div class="fw-600 font-xssss text-grey-900">{{ inv.evento.titulo }}</div>
+                                <div class="font-xss text-grey-500">Invita: {{ inv.invitador.username }}</div>
+                            </div>
+                            <form method="post" class="m-0">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="aceptar_inv_evento">
+                                <input type="hidden" name="inv_id" value="{{ inv.id }}">
+                                <button type="submit" class="btn btn-sm btn-primary">Aceptar</button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="font-xss text-grey-500 mb-0">No tienes invitaciones pendientes a eventos.</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
-        <div id="no-more" class="text-center py-4 d-none">
-            <p class="font-xsss text-grey-400 mb-0">No hay mas usuarios</p>
+        <div class="row">
+            <div class="col-lg-6 pe-2 ps-2 mb-3">
+                <div class="card border-0 shadow-xss rounded-3 p-3 h-100">
+                    <h4 class="fw-700 font-xssss mb-3">Crear grupo musical</h4>
+                    <form method="post" class="row g-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="crear_grupo">
+                        <div class="col-12">
+                            <input type="text" name="nombre" class="form-control" placeholder="Nombre del grupo" required>
+                        </div>
+                        <div class="col-6">
+                            <select name="genero" class="form-control">
+                                {% for value, label in generos %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <input type="text" name="ciudad" class="form-control" placeholder="Ciudad">
+                        </div>
+                        <div class="col-12">
+                            <textarea name="descripcion" class="form-control" rows="2" placeholder="Buscamos guitarrista, productor, cantantes..."></textarea>
+                        </div>
+                        <div class="col-12 d-flex align-items-center justify-content-between">
+                            <label class="font-xss text-grey-600 mb-0"><input type="checkbox" name="es_privado" class="me-1">Grupo privado</label>
+                            <button type="submit" class="btn btn-sm btn-primary">Crear grupo</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="col-lg-6 pe-2 ps-2 mb-3">
+                <div class="card border-0 shadow-xss rounded-3 p-3 h-100">
+                    <h4 class="fw-700 font-xssss mb-3">Crear evento musical</h4>
+                    <form method="post" class="row g-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="crear_evento">
+                        <div class="col-12">
+                            <input type="text" name="titulo" class="form-control" placeholder="Título del evento" required>
+                        </div>
+                        <div class="col-6">
+                            <input type="datetime-local" name="fecha_evento" class="form-control" required>
+                        </div>
+                        <div class="col-6">
+                            <input type="text" name="lugar" class="form-control" placeholder="Lugar / sala / estudio" required>
+                        </div>
+                        <div class="col-6">
+                            <select name="genero" class="form-control">
+                                {% for value, label in generos %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <input type="number" min="1" name="cupo" class="form-control" placeholder="Cupo (opcional)">
+                        </div>
+                        <div class="col-12">
+                            <textarea name="descripcion" class="form-control" rows="2" placeholder="Showcase, jam session, composición colaborativa..."></textarea>
+                        </div>
+                        <div class="col-12 d-flex align-items-center justify-content-between">
+                            <label class="font-xss text-grey-600 mb-0"><input type="checkbox" name="es_privado" class="me-1">Evento privado</label>
+                            <button type="submit" class="btn btn-sm btn-primary">Crear evento</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-1">
+            <div class="col-lg-6 pe-2 ps-2 mb-3">
+                <div class="card border-0 shadow-xss rounded-3 p-3 h-100">
+                    <h4 class="fw-700 font-xssss mb-3">Grupos para colaborar</h4>
+                    {% for g in grupos %}
+                    <div class="border rounded-3 p-3 mb-2">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="fw-700 font-xssss text-grey-900">{{ g.nombre }}</div>
+                                <div class="font-xss text-grey-500">{{ g.get_genero_display }}{% if g.ciudad %} • {{ g.ciudad }}{% endif %}</div>
+                            </div>
+                            <span class="badge bg-light text-dark">{{ g.total_miembros }} miembros</span>
+                        </div>
+                        {% if g.descripcion %}
+                        <p class="font-xss text-grey-600 mt-2 mb-2">{{ g.descripcion|truncatechars:130 }}</p>
+                        {% endif %}
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            {% if g.id in mis_grupos_ids %}
+                                <span class="badge bg-success">Ya eres miembro</span>
+                            {% else %}
+                                <form method="post" class="m-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="unirse_grupo">
+                                    <input type="hidden" name="grupo_id" value="{{ g.id }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Unirme</button>
+                                </form>
+                            {% endif %}
+
+                            {% if g.id in mis_admin_grupos_ids %}
+                                <form method="post" class="m-0 d-flex gap-1 align-items-start invite-form" data-kind="grupo" data-id="{{ g.id }}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="invitar_grupo">
+                                    <input type="hidden" name="grupo_id" value="{{ g.id }}">
+                                    <div class="invite-picker" style="min-width:220px;">
+                                        <input type="text" class="form-control form-control-sm invite-username-input" placeholder="Buscar artista o @usuario" autocomplete="off">
+                                        <input type="hidden" name="username" class="invite-username-hidden">
+                                        <div class="invite-suggestions d-none"></div>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-primary">Invitar</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="font-xss text-grey-500 mb-0">Aún no hay grupos. Crea el primero para tu comunidad.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="col-lg-6 pe-2 ps-2 mb-3">
+                <div class="card border-0 shadow-xss rounded-3 p-3 h-100">
+                    <h4 class="fw-700 font-xssss mb-3">Eventos y convocatorias</h4>
+                    {% for e in eventos %}
+                    <div class="border rounded-3 p-3 mb-2">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="fw-700 font-xssss text-grey-900">{{ e.titulo }}</div>
+                                <div class="font-xss text-grey-500">{{ e.get_genero_display }} • {{ e.fecha_evento|date:'d M Y H:i' }}</div>
+                            </div>
+                            <span class="badge bg-light text-dark">{{ e.total_asistentes }} asistentes</span>
+                        </div>
+                        <div class="font-xss text-grey-600 mt-1">{{ e.lugar }}</div>
+                        {% if e.descripcion %}
+                        <p class="font-xss text-grey-600 mt-2 mb-2">{{ e.descripcion|truncatechars:130 }}</p>
+                        {% endif %}
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            {% if e.id in mis_eventos_ids %}
+                                <span class="badge bg-success">Vas a asistir</span>
+                            {% else %}
+                                <form method="post" class="m-0">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="unirse_evento">
+                                    <input type="hidden" name="evento_id" value="{{ e.id }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Asistiré</button>
+                                </form>
+                            {% endif %}
+
+                            {% if e.creador_id == user.id %}
+                                <form method="post" class="m-0 d-flex gap-1 align-items-start invite-form" data-kind="evento" data-id="{{ e.id }}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="invitar_evento">
+                                    <input type="hidden" name="evento_id" value="{{ e.id }}">
+                                    <div class="invite-picker" style="min-width:220px;">
+                                        <input type="text" class="form-control form-control-sm invite-username-input" placeholder="Buscar artista o @usuario" autocomplete="off">
+                                        <input type="hidden" name="username" class="invite-username-hidden">
+                                        <div class="invite-suggestions d-none"></div>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-primary">Invitar</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="font-xss text-grey-500 mb-0">Aún no hay eventos. Crea uno para activar tu escena local.</p>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
+.invite-picker { position: relative; }
+.invite-suggestions {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    border: 1px solid #e9edf3;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(16,24,40,.12);
+    z-index: 1050;
 }
-.usuario-card { animation: fadeInUp 0.4s ease forwards; opacity: 0; }
+.invite-suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f3f8;
+}
+.invite-suggestion-item:last-child { border-bottom: 0; }
+.invite-suggestion-item:hover { background: #f8faff; }
+.invite-suggestion-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.invite-suggestion-name { font-size: 12px; font-weight: 600; color: #1f2937; line-height: 1.2; }
+.invite-suggestion-username { font-size: 11px; color: #6b7280; }
 </style>
 
 <script>
-(function() {
-    const grid = document.getElementById('usuarios-grid');
-    const spinner = document.getElementById('loading-spinner');
-    const noMore = document.getElementById('no-more');
+(function () {
     const defaultImg = "{% static 'sociala/images/user-12.png' %}";
-    let offset = 0;
-    const limit = 6;
-    let loading = false;
-    let finished = false;
+    const forms = document.querySelectorAll('.invite-form');
 
-    function crearCard(u, delay) {
-        const portadaStyle = u.portada
-            ? `background:url(${u.portada}) center/cover`
-            : 'background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)';
-        const foto = u.foto || defaultImg;
-        const btnClass = u.ya_sigo
-            ? 'bg-greylight font-xsssss fw-700 ls-lg text-grey-700'
-            : 'bg-current font-xsssss fw-700 ls-lg text-white';
-        const btnText = u.ya_sigo ? 'SIGUIENDO' : 'SEGUIR';
-
-        const col = document.createElement('div');
-        col.className = 'col-md-6 col-sm-6 pe-2 ps-2';
-        col.innerHTML = `
-            <div class="usuario-card card d-block border-0 shadow-xss rounded-3 overflow-hidden mb-3" style="animation-delay:${delay}ms">
-                <div class="card-body position-relative" style="height:100px;${portadaStyle};background-size:cover;background-position:center;"></div>
-                <div class="card-body d-block w-100 pb-4 pt-0 text-left position-relative" style="padding-left:100px;padding-right:16px;min-height:90px;">
-                    <figure class="avatar position-absolute w75 z-index-1" style="top:-38px;left:15px;">
-                        <a href="/usuario/${u.username}/">
-                            <img src="${foto}" alt="${u.nombre}" class="p-1 bg-white rounded-circle w-100">
-                        </a>
-                    </figure>
-                    <a href="/usuario/${u.username}/" class="text-decoration-none">
-                        <h4 class="fw-700 font-xsss mt-2 mb-1 text-grey-900">${u.nombre}</h4>
-                    </a>
-                    <p class="fw-500 font-xsssss text-grey-500 mt-0 mb-1">${u.email}</p>
-                    <p class="fw-500 font-xsssss text-grey-500 mt-0 mb-0">
-                        <strong>${u.seguidores}</strong> seguidores &middot;
-                        <strong>${u.siguiendo}</strong> siguiendo
-                    </p>
-                    <span class="position-absolute d-flex align-items-center" style="right:16px;top:10px;">
-                        <a href="/usuario/${u.username}/seguir/" class="text-center p-2 lh-24 w100 ms-1 ls-3 d-inline-block rounded-xl ${btnClass}">${btnText}</a>
-                    </span>
-                </div>
-            </div>`;
-        return col;
+    function closeAll() {
+        document.querySelectorAll('.invite-suggestions').forEach(function (s) {
+            s.classList.add('d-none');
+            s.innerHTML = '';
+        });
     }
 
-    function cargarUsuarios() {
-        if (loading || finished) return;
-        loading = true;
-        spinner.classList.remove('d-none');
-
-        fetch(`/api/usuarios/?offset=${offset}&limit=${limit}`)
-            .then(r => r.json())
-            .then(data => {
-                spinner.classList.add('d-none');
-                const usuarios = data.usuarios;
-                if (usuarios.length === 0) {
-                    finished = true;
-                    noMore.classList.remove('d-none');
-                    return;
-                }
-                usuarios.forEach((u, i) => {
-                    const card = crearCard(u, i * 100);
-                    grid.appendChild(card);
-                });
-                offset += usuarios.length;
-                if (usuarios.length < limit) {
-                    finished = true;
-                    noMore.classList.remove('d-none');
-                }
-                loading = false;
-            })
-            .catch(() => {
-                spinner.classList.add('d-none');
-                loading = false;
-            });
+    function esc(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
-    // Detectar scroll cerca del final
-    window.addEventListener('scroll', function() {
-        if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {
-            cargarUsuarios();
-        }
+    forms.forEach(function (form) {
+        const input = form.querySelector('.invite-username-input');
+        const hidden = form.querySelector('.invite-username-hidden');
+        const suggestions = form.querySelector('.invite-suggestions');
+        const kind = form.getAttribute('data-kind') || '';
+        const entityId = form.getAttribute('data-id') || '';
+        if (!input || !hidden || !suggestions) return;
+
+        let timer = null;
+
+        input.addEventListener('input', function () {
+            const q = (input.value || '').trim();
+            hidden.value = '';
+            clearTimeout(timer);
+
+            if (q.length < 1) {
+                suggestions.classList.add('d-none');
+                suggestions.innerHTML = '';
+                return;
+            }
+
+            timer = setTimeout(function () {
+                const url = '/usuarios/buscar/?q=' + encodeURIComponent(q)
+                    + '&tipo=' + encodeURIComponent(kind)
+                    + '&id=' + encodeURIComponent(entityId);
+                fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        const usuarios = (data && data.usuarios) ? data.usuarios : [];
+                        if (!usuarios.length) {
+                            suggestions.innerHTML = '<div class="invite-suggestion-item"><div><div class="invite-suggestion-name">Sin resultados</div><div class="invite-suggestion-username">Intenta con otro nombre</div></div></div>';
+                            suggestions.classList.remove('d-none');
+                            return;
+                        }
+
+                        suggestions.innerHTML = usuarios.map(function (u) {
+                            const foto = u.foto || defaultImg;
+                            const nombre = u.nombre || u.username;
+                            const username = u.username || '';
+                            return ''
+                                + '<div class="invite-suggestion-item" data-username="' + esc(username) + '" data-nombre="' + esc(nombre) + '">'
+                                + '  <img class="invite-suggestion-avatar" src="' + esc(foto) + '" onerror="this.src=\'' + esc(defaultImg) + '\'">'
+                                + '  <div>'
+                                + '    <div class="invite-suggestion-name">' + esc(nombre) + '</div>'
+                                + '    <div class="invite-suggestion-username">@' + esc(username) + '</div>'
+                                + '  </div>'
+                                + '</div>';
+                        }).join('');
+
+                        suggestions.classList.remove('d-none');
+                    })
+                    .catch(function () {
+                        suggestions.classList.add('d-none');
+                    });
+            }, 220);
+        });
+
+        suggestions.addEventListener('click', function (e) {
+            const item = e.target.closest('.invite-suggestion-item[data-username]');
+            if (!item) return;
+            const username = item.getAttribute('data-username') || '';
+            const nombre = item.getAttribute('data-nombre') || username;
+            hidden.value = username;
+            input.value = nombre + ' (@' + username + ')';
+            suggestions.classList.add('d-none');
+        });
+
+        form.addEventListener('submit', function (e) {
+            if (!hidden.value) {
+                const raw = (input.value || '').trim();
+                const m = raw.match(/@([a-zA-Z0-9_.-]+)/);
+                if (m && m[1]) {
+                    hidden.value = m[1];
+                }
+            }
+            if (!hidden.value) {
+                e.preventDefault();
+                input.focus();
+            }
+        });
     });
 
-    // Carga inicial
-    cargarUsuarios();
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.invite-picker')) closeAll();
+    });
 })();
 </script>
 {% endblock %}

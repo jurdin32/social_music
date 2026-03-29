@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ titulo_lista }} - Veriffai{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card shadow-xss w-100 border-0 p-4 mb-3">
+            <div class="card-body p-0 d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h2 class="fw-700 mb-0 mt-0 font-md text-grey-900">
+                    <i class="feather-users text-current me-2"></i>{{ titulo_lista }}
+                </h2>
+                <a href="{% url 'pagina_usuario' usuario_objetivo.username %}" class="btn btn-sm btn-outline-primary">Volver al perfil</a>
+            </div>
+        </div>
+
+        <div class="row ps-2 pe-1">
+            {% for p in perfiles %}
+            <div class="col-md-6 col-sm-6 pe-2 ps-2 mb-3">
+                <div class="card d-block border-0 shadow-xss rounded-3 overflow-hidden">
+                    <div class="card-body d-flex align-items-center gap-3 p-3">
+                        <a href="{% url 'pagina_usuario' p.usuario.username %}">
+                            <img src="{% if p.foto %}{{ p.foto.url }}{% elif p.get_foto %}{{ p.get_foto }}{% else %}{% static 'sociala/images/user-12.png' %}{% endif %}"
+                                 alt="{{ p.nombre_completo }}"
+                                 class="rounded-circle"
+                                 style="width:54px;height:54px;object-fit:cover;"
+                                 onerror="this.src='{% static 'sociala/images/user-12.png' %}'">
+                        </a>
+                        <div class="flex-grow-1">
+                            <a href="{% url 'pagina_usuario' p.usuario.username %}" class="text-decoration-none">
+                                <div class="fw-700 font-xssss text-grey-900">{{ p.nombre_completo }}</div>
+                            </a>
+                            <div class="font-xss text-grey-500">@{{ p.usuario.username }}</div>
+                            {% if p.ocupacion %}
+                            <div class="font-xss text-grey-500">{{ p.ocupacion }}</div>
+                            {% endif %}
+                        </div>
+                        {% if p.usuario != user %}
+                        <a href="{% url 'toggle_seguir' p.usuario.username %}"
+                           class="btn btn-sm {% if p.usuario.username in mis_seguidos_usernames %}btn-light text-grey-700{% else %}btn-primary text-white{% endif %}">
+                            {% if p.usuario.username in mis_seguidos_usernames %}Siguiendo{% else %}Seguir{% endif %}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="card border-0 shadow-xss rounded-3 p-4 text-center">
+                    <h4 class="fw-700 font-sm mb-2">Sin resultados</h4>
+                    <p class="font-xssss text-grey-500 mb-0">No hay perfiles para mostrar en esta lista.</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

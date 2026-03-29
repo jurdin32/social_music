@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notificaciones{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-xl-12">
+        <div class="chat-wrapper p-3 w-100 position-relative scroll-bar bg-white theme-dark-bg">
+
+            <!-- Encabezado -->
+            <div class="d-flex align-items-center mb-4 mt-2">
+                <h2 class="fw-700 font-md text-grey-900 mb-0 d-flex align-items-center">
+                    Notificaciones
+                    {% if notificaciones %}
+                    <span class="circle-count bg-warning text-white font-xsssss rounded-3 ms-2 ls-3 fw-600 p-2 mt-0">
+                        {{ notificaciones|length }}
+                    </span>
+                    {% endif %}
+                </h2>
+                <form method="post" action="{% url 'marcar_notificaciones_leidas' %}" class="ms-auto">
+                    {% csrf_token %}
+                    <button type="submit"
+                            class="btn-round-sm bg-greylight rounded-3 border-0 cursor-pointer"
+                            title="Marcar todas como leídas">
+                        <i class="feather-check-square font-xss text-grey-500"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Lista de notificaciones -->
+            <ul class="notification-box">
+
+                {% for notif in notificaciones %}
+                <li>
+                    <a href="{% url 'abrir_notificacion' notif.pk %}"
+                       class="d-flex align-items-center p-3 rounded-3 {% if not notif.leida %}bg-lightblue theme-light-bg{% endif %}">
+
+                        <!-- Avatar del remitente -->
+                        {% if notif.remitente.perfil.foto %}
+                            <img src="{{ notif.remitente.perfil.foto.url }}"
+                                 alt="{{ notif.remitente.perfil.nombre_completo }}"
+                                 class="w45 me-3" style="border-radius:50%;object-fit:cover;">
+                        {% elif notif.remitente.perfil.get_foto %}
+                            <img src="{{ notif.remitente.perfil.get_foto }}"
+                                 alt="{{ notif.remitente.perfil.nombre_completo }}"
+                                 class="w45 me-3" style="border-radius:50%;object-fit:cover;">
+                        {% else %}
+                            <span class="btn-round-md me-3 font-xs fw-700 text-white
+                                {% if notif.tipo == 'album' %}bg-primary-gradiant
+                                {% elif notif.tipo == 'follow' %}bg-gold-gradiant
+                                {% else %}bg-mini-gradiant{% endif %}">
+                                {{ notif.remitente.username|slice:':1'|upper }}
+                            </span>
+                        {% endif %}
+
+                        <!-- Icono según tipo -->
+                        {% if notif.tipo == 'publicacion' %}
+                            <i class="feather-message-square text-white bg-mini-gradiant me-2 font-xssss notification-react"></i>
+                        {% elif notif.tipo == 'album' %}
+                            <i class="feather-music text-white bg-primary-gradiant me-2 font-xssss notification-react"></i>
+                        {% elif notif.tipo == 'follow' %}
+                            <i class="feather-user-plus text-white bg-gold-gradiant me-2 font-xssss notification-react"></i>
+                        {% else %}
+                            <i class="feather-bell text-white bg-red-gradiant me-2 font-xssss notification-react"></i>
+                        {% endif %}
+
+                        <!-- Mensaje y tiempo -->
+                        <h6 class="font-xssss text-grey-900 mb-0 mt-0 fw-500 lh-20">
+                            {{ notif.mensaje }}
+                            <span class="d-block text-grey-500 font-xssss fw-600 mb-0 mt-0">
+                                hace {{ notif.creado|timesince }}
+                            </span>
+                            <span class="d-inline-block mt-1 px-2 py-1 rounded-pill font-xsssss fw-700 {% if notif.leida %}bg-greylight text-grey-700{% else %}bg-success text-white{% endif %}">
+                                {% if notif.leida %}Visto{% else %}Nuevo{% endif %}
+                            </span>
+                        </h6>
+
+                        <i class="ti-more-alt text-grey-500 font-xs ms-auto"></i>
+                    </a>
+                </li>
+                {% empty %}
+                <li class="text-center py-5">
+                    <i class="feather-bell-off font-xl text-grey-300 d-block mb-3"></i>
+                    <h4 class="fw-600 text-grey-500 font-xsss">Sin notificaciones por el momento</h4>
+                </li>
+                {% endfor %}
+
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

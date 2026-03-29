@@ -26,8 +26,8 @@
                                     </figure>
                                     <h4 class="fw-700 font-sm mt-2 mb-1 pl-15">{{ perfil_visto.nombre_completo }} <span class="fw-500 font-xssss text-grey-500 mt-1 mb-0 d-block">{{ usuario_visto.email }}</span></h4>
                                     <div class="d-flex pl-15 mb-3">
-                                        <span class="font-xssss text-grey-600 fw-600 me-3"><strong class="text-grey-900">{{ perfil_visto.num_seguidores }}</strong> seguidores</span>
-                                        <span class="font-xssss text-grey-600 fw-600"><strong class="text-grey-900">{{ perfil_visto.num_siguiendo }}</strong> siguiendo</span>
+                                        <a href="{% url 'lista_seguidores' usuario_visto.username %}" class="font-xssss text-grey-600 fw-600 me-3 text-decoration-none"><strong class="text-grey-900">{{ perfil_visto.num_seguidores }}</strong> seguidores</a>
+                                        <a href="{% url 'lista_siguiendo' usuario_visto.username %}" class="font-xssss text-grey-600 fw-600 text-decoration-none"><strong class="text-grey-900">{{ perfil_visto.num_siguiendo }}</strong> siguiendo</a>
                                     </div>
                                     <div class="d-flex align-items-center justify-content-center position-absolute-md right-15 top-0 me-2">
                                         {% if es_propio %}
@@ -42,6 +42,7 @@
                                 <div class="card-body d-block w-100 shadow-none mb-0 p-0 border-top-xs">
                                     <ul class="nav nav-tabs h55 d-flex product-info-tab border-bottom-0 ps-4" id="perfil-tabs" role="tablist">
                                         <li class="list-inline-item me-5"><a class="fw-700 font-xssss text-grey-500 pt-3 pb-3 ls-1 d-inline-block active tab-link" href="#" data-tab="tab-albumes"><i class="feather-disc me-1"></i>Álbumes</a></li>
+                                        <li class="list-inline-item me-5"><a class="fw-700 font-xssss text-grey-500 pt-3 pb-3 ls-1 d-inline-block tab-link" href="#" data-tab="tab-fotos"><i class="feather-image me-1"></i>Fotos</a></li>
                                         <li class="list-inline-item me-5"><a class="fw-700 font-xssss text-grey-500 pt-3 pb-3 ls-1 d-inline-block tab-link" href="#" data-tab="tab-seguidores"><i class="feather-users me-1"></i>Seguidores</a></li>
                                         <li class="list-inline-item me-5"><a class="fw-700 font-xssss text-grey-500 pt-3 pb-3 ls-1 d-inline-block tab-link" href="#" data-tab="tab-siguiendo"><i class="feather-user-check me-1"></i>Siguiendo</a></li>
                                     </ul>
@@ -181,6 +182,43 @@
                                             <i class="feather-plus me-1"></i>Crear mi primer álbum
                                         </a>
                                         {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- TAB: Fotos -->
+                            <div id="tab-fotos" class="tab-panel" style="display:none;">
+                                <div class="card w-100 shadow-xss rounded-xxl border-0 p-4 mb-3 mt-3">
+                                    <div class="card-body p-0 d-flex align-items-center mb-3">
+                                        <h4 class="fw-700 font-xss text-grey-900 mb-0"><i class="feather-image text-current me-2"></i>Fotos</h4>
+                                        <span class="ms-auto font-xsssss text-grey-500">{{ fotos|length }} foto{{ fotos|length|pluralize:"s" }}</span>
+                                    </div>
+                                    {% if fotos %}
+                                    <div class="row g-2">
+                                        {% for pub in fotos %}
+                                        <div class="col-4 col-sm-3">
+                                            <a href="{% url 'inicio' %}#pub-{{ pub.pk }}" data-foto="{{ pub.imagen.url }}" class="foto-thumb d-block position-relative rounded-xxl overflow-hidden" style="aspect-ratio:1;">
+                                                <img src="{{ pub.imagen.url }}" alt="" class="w-100 h-100" style="object-fit:cover;">
+                                                <div class="foto-overlay position-absolute inset-0 d-flex flex-column justify-content-end p-2" style="inset:0;background:linear-gradient(0deg,rgba(0,0,0,.45) 0%,transparent 60%);opacity:0;transition:opacity .2s;">
+                                                    {% if pub.contenido %}
+                                                    <p class="text-white font-xsssss mb-0 text-truncate">{{ pub.contenido|truncatechars:40 }}</p>
+                                                    {% endif %}
+                                                    <span class="text-white font-xsssss opacity-75">{{ pub.creado|timesince }} atrás</span>
+                                                </div>
+                                            </a>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    <style>
+                                        .foto-thumb:hover .foto-overlay { opacity: 1 !important; }
+                                    </style>
+                                    {% else %}
+                                    <div class="text-center py-5">
+                                        <i class="feather-image text-grey-300" style="font-size:50px;"></i>
+                                        <p class="font-xsss text-grey-500 mt-3 mb-0">
+                                            {% if es_propio %}Aún no has publicado fotos.{% else %}Este usuario no tiene fotos publicadas.{% endif %}
+                                        </p>
                                     </div>
                                     {% endif %}
                                 </div>

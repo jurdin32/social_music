@@ -73,6 +73,7 @@
                                                 <th style="width:40px;">#</th>
                                                 <th>Título</th>
                                                 <th style="width:100px;">Duración</th>
+                                                <th style="width:130px;">Likes</th>
                                                 <th style="width:140px;"></th>
                                             </tr>
                                         </thead>
@@ -85,6 +86,19 @@
                                                 </td>
                                                 <td class="font-xsss text-grey-500">
                                                     {% if cancion.duracion %}{{ cancion.duracion_formato }}{% else %}--:--{% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if user.is_authenticated %}
+                                                    <button class="btn-like-cancion btn border-0 bg-transparent p-0 d-inline-flex align-items-center"
+                                                            data-id="{{ cancion.pk }}"
+                                                            data-url="{% url 'like_cancion' cancion.pk %}"
+                                                            data-liked="{% if cancion.pk in mis_likes_canciones %}true{% else %}false{% endif %}">
+                                                        <i class="feather-heart {% if cancion.pk in mis_likes_canciones %}text-danger{% else %}text-grey-400{% endif %} font-md me-1" style="transition:color .2s;"></i>
+                                                        <span class="font-xsss text-grey-600 like-count-cancion-{{ cancion.pk }}">{{ cancion.num_likes }}</span>
+                                                    </button>
+                                                    {% else %}
+                                                    <span class="font-xsss text-grey-500">{{ cancion.num_likes }}</span>
+                                                    {% endif %}
                                                 </td>
                                                 <td class="text-end">
                                                     {% if cancion.archivo %}
@@ -142,6 +156,9 @@
                                     <button type="submit" id="inline-btn" class="btn bg-current text-white fw-600 font-xssss rounded-xl px-4 py-2" disabled>
                                         <i class="feather-upload me-1"></i>Subir canciones
                                     </button>
+                                    <div id="inline-upload-hint" class="font-xsssss text-grey-500 mt-2" style="display:none;">
+                                        <i class="feather-loader me-1"></i>Subiendo archivos... no cierres esta página.
+                                    </div>
                                 </form>
                             </div>
                         </div>
@@ -193,12 +210,49 @@
     });
 })();
 
+// Like de canciones en detalle
+(function(){
+    var csrfToken = '{{ csrf_token }}';
+    document.querySelectorAll('.btn-like-cancion').forEach(function(btn){
+        btn.addEventListener('click', function(e){
+            e.preventDefault();
+            var url = this.getAttribute('data-url');
+            var icon = this.querySelector('i');
+            var countEl = this.querySelector('span');
+            var self = this;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(function(r){ return r.json(); })
+            .then(function(data){
+                if (!data || typeof data.liked === 'undefined') return;
+                self.setAttribute('data-liked', data.liked ? 'true' : 'false');
+                if (icon) {
+                    icon.classList.toggle('text-danger', !!data.liked);
+                    icon.classList.toggle('text-grey-400', !data.liked);
+                }
+                if (countEl && typeof data.total !== 'undefined') {
+                    countEl.textContent = data.total;
+                }
+            })
+            .catch(function(){});
+        });
+    });
+})();
+
 // Inline upload en detalle
 (function(){
     var drop = document.getElementById('inline-drop');
     var input = document.getElementById('inline-input');
     var filesDiv = document.getElementById('inline-files');
     var btn = document.getElementById('inline-btn');
+    var formInline = document.getElementById('form-inline-upload');
+    var hintInline = document.getElementById('inline-upload-hint');
     if (!drop) return;
 
     var archivos = [];
@@ -248,6 +302,16 @@
     drop.addEventListener('dragover',function(e){e.preventDefault();this.style.borderColor='#5271ff';this.style.background='#f0f4ff';});
     drop.addEventListener('dragleave',function(e){e.preventDefault();this.style.borderColor='#ddd';this.style.background='';});
     drop.addEventListener('drop',function(e){e.preventDefault();this.style.borderColor='#ddd';this.style.background='';agregar(e.dataTransfer.files);});
+
+    if (formInline) {
+        formInline.addEventListener('submit', function () {
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="feather-loader me-1"></i>Subiendo...';
+            }
+            if (hintInline) hintInline.style.display = 'block';
+        });
+    }
 })();
 </script>
 {% endblock %}

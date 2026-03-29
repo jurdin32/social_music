@@ -1,0 +1,561 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chat con {{ otro_usuario.username }}{% endblock %}
+
+{% block content %}
+<style>
+    /* ── Layout del wrapper ─────────────────────────────────── */
+    .chat-conv-wrapper {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .chat-conv-wrapper #conv-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-x: hidden !important;
+    }
+    .chat-conv-wrapper .chat-footer {
+        flex-shrink: 0;
+        position: sticky;
+        bottom: 0;
+        z-index: 3;
+        background: #fff;
+    }
+    .chat-conv-wrapper .chat-footer .form-group.icon-right-input i {
+        position: static !important;
+        right: auto !important;
+        top: auto !important;
+    }
+    .chat-conv-wrapper .chat-footer .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+    }
+
+    /* ── Burbujas de mensajes ───────────────────────────────── */
+    .msg-row {
+        display: flex;
+        margin-bottom: 3px;
+    }
+    .msg-row.msg-self  { justify-content: flex-end; }
+    .msg-row.msg-other { justify-content: flex-start; }
+
+    .msg-wrap {
+        display: flex;
+        flex-direction: column;
+        width: auto;
+        max-width: min(74vw, 340px);
+    }
+    .msg-self .msg-wrap {
+        margin-left: auto;
+        align-items: flex-end;
+    }
+    .msg-other .msg-wrap {
+        margin-right: auto;
+        align-items: flex-start;
+    }
+
+    .msg-bubble {
+        display: inline-block;
+        width: auto;
+        max-width: 100%;
+        padding: 8px 11px;
+        border-radius: 14px;
+        font-size: 13px;
+        line-height: 1.35;
+        text-align: left;
+        word-break: keep-all;
+        overflow-wrap: break-word;
+        white-space: normal;
+        hyphens: none;
+    }
+    .msg-bubble-self {
+        background: var(--theme-color, #1d72f4);
+        color: #fff;
+        border-bottom-right-radius: 3px;
+    }
+    .msg-bubble-other {
+        background: #f0f2f5;
+        color: #1c1e21;
+        border-bottom-left-radius: 3px;
+    }
+    .msg-bubble img, .msg-bubble video, .msg-bubble audio {
+        max-width: 100%;
+        border-radius: 8px;
+        display: block;
+    }
+    .msg-time {
+        font-size: 10px;
+        color: #adb5bd;
+        margin-top: 2px;
+        padding: 0 2px;
+    }
+    .msg-self  .msg-time { text-align: right; }
+    .msg-other .msg-time { text-align: left; }
+
+    /* ── Barra de carga ─────────────────────────────────────── */
+    .chat-upload-status {
+        display: none;
+        margin-top: 8px;
+    }
+    .chat-upload-bar {
+        width: 100%;
+        height: 6px;
+        border-radius: 8px;
+        background: #e9edf3;
+        overflow: hidden;
+    }
+    .chat-upload-bar > span {
+        display: block;
+        height: 100%;
+        width: 0;
+        background: linear-gradient(90deg,#1e74fd,#4ca0ff);
+        transition: width .2s ease;
+    }
+    .chat-upload-text {
+        display: block;
+        font-size: 11px;
+        color: #6b7280;
+        margin-bottom: 4px;
+    }
+
+    /* ── Dark mode ──────────────────────────────────────────── */
+    body.theme-dark .chat-conv-wrapper {
+        background: #1a2236 !important;
+    }
+    body.theme-dark .chat-conv-wrapper .chat-header {
+        background: #293145 !important;
+        border-color: #3a4a69 !important;
+    }
+    body.theme-dark .chat-conv-wrapper .chat-header h5,
+    body.theme-dark .chat-conv-wrapper .chat-header span,
+    body.theme-dark .chat-conv-wrapper .chat-header a:not(.text-current) {
+        color: #c8d6e8 !important;
+    }
+    body.theme-dark .chat-conv-wrapper #conv-typing-bar {
+        background: #1e2a40 !important;
+    }
+    body.theme-dark .chat-conv-wrapper #conv-body {
+        background: #1a2236 !important;
+    }
+    body.theme-dark .chat-conv-wrapper .chat-footer {
+        background: #293145 !important;
+        border-color: #3a4a69 !important;
+    }
+    body.theme-dark .chat-conv-wrapper .chat-footer input.form-control {
+        background: #1a2236 !important;
+        color: #c8d6e8 !important;
+        border-color: #3a4a69 !important;
+    }
+    body.theme-dark .chat-conv-wrapper .chat-footer input.form-control::placeholder {
+        color: #6e88aa !important;
+    }
+    body.theme-dark .chat-conv-wrapper .chat-footer .btn.bg-greylight {
+        background: #3a4a69 !important;
+        color: #c8d6e8 !important;
+    }
+    body.theme-dark .msg-bubble-other {
+        background: #2d3a55 !important;
+        color: #d0dce8 !important;
+    }
+    body.theme-dark .msg-time {
+        color: #6e88aa !important;
+    }
+    body.theme-dark .chat-upload-text {
+        color: #8898aa !important;
+    }
+    body.theme-dark .chat-upload-bar {
+        background: #2d3a55 !important;
+    }
+
+    /* ── Responsive móvil ───────────────────────────────────── */
+    @media (max-width: 991.98px) {
+        .chat-conv-wrapper {
+            display: flex !important;
+            flex-direction: column !important;
+            height: calc(100dvh - 170px) !important;
+            overflow: hidden !important;
+            border-radius: 14px !important;
+        }
+        .chat-conv-wrapper #conv-body {
+            flex: 1 1 auto !important;
+            height: auto !important;
+            min-height: 0 !important;
+            padding-bottom: 10px !important;
+        }
+        .msg-wrap {
+            max-width: min(78vw, 312px);
+        }
+        .chat-conv-wrapper .chat-footer {
+            flex-shrink: 0;
+            padding: 10px !important;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom)) !important;
+            background: #fff !important;
+            border-top: 1px solid #eef1f5 !important;
+        }
+
+        .chat-conv-wrapper .chat-footer .form-control {
+            min-height: 42px;
+        }
+
+        .chat-conv-wrapper .chat-header {
+            padding: 10px !important;
+        }
+
+        .chat-conv-wrapper #conv-typing-bar {
+            min-height: 18px !important;
+            padding: 2px 12px !important;
+        }
+    }
+</style>
+<div class="row">
+    <div class="col-xl-12">
+        <div class="chat-wrapper chat-conv-wrapper p-0 w-100 position-relative bg-white theme-dark-bg rounded-xxl overflow-hidden shadow-xss">
+
+            <!-- Cabecera de la conversación -->
+            <div class="chat-header d-flex align-items-center p-3 border-bottom bg-white w-100">
+                <a href="{% url 'chat_inbox' %}" class="me-3 text-grey-500">
+                    <i class="feather-arrow-left font-md"></i>
+                </a>
+                <div class="position-relative me-3">
+                    {% if otro_perfil.foto %}
+                        <img src="{{ otro_perfil.foto.url }}" alt="{{ otro_usuario.username }}"
+                             class="w40 rounded-circle" style="object-fit:cover;">
+                    {% elif otro_usuario.socialaccount_set.all %}
+                        <img src="{{ otro_usuario.socialaccount_set.all.0.get_avatar_url }}"
+                             alt="{{ otro_usuario.username }}" class="w40 rounded-circle">
+                    {% else %}
+                        <span class="btn-round-md bg-primary-gradiant text-white fw-700 font-xss d-flex align-items-center justify-content-center"
+                              style="width:40px;height:40px;border-radius:50%;">
+                            {{ otro_usuario.username|slice:":1"|upper }}
+                        </span>
+                    {% endif %}
+                    <span class="{% if otro_usuario.id in online_users_ids %}bg-success{% else %}bg-secondary{% endif %} position-absolute btn-round-xss"
+                          id="conv-online-dot"
+                          style="bottom:0;right:0;width:10px;height:10px;border:2px solid white;border-radius:50%;"></span>
+                </div>
+                <div>
+                    <h5 class="fw-700 font-xss text-grey-900 mb-0">{{ otro_perfil.nombre_completo }}</h5>
+                    <span class="font-xsssss text-grey-500" id="conv-status">
+                        {% if otro_usuario.id in online_users_ids %}En línea{% else %}Desconectado{% endif %}
+                    </span>
+                </div>
+                <a href="{% url 'pagina_usuario' otro_usuario.username %}"
+                   class="ms-auto font-xssss text-current fw-600">
+                    Ver perfil
+                </a>
+            </div>
+
+            <!-- Indicador de escritura -->
+            <div id="conv-typing-bar" style="padding:4px 16px;background:#f6f7fb;min-height:20px;">
+                <span id="conv-typing-text" style="font-size:11px;color:#aaa;font-style:italic;display:none;">
+                    escribiendo<span id="conv-typing-dots">...</span>
+                </span>
+            </div>
+
+            <!-- Mensajes -->
+            <div class="chat-body p-3" id="conv-body"
+                 style="height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;">
+                {% for msg in mensajes %}
+                    {% if msg.emisor == request.user %}
+                    <div class="msg-row msg-self">
+                        <div class="msg-wrap">
+                            <div class="msg-bubble msg-bubble-self">
+                                {% if msg.tipo == 'texto' %}
+                                    {{ msg.contenido|linebreaksbr }}
+                                {% elif msg.tipo == 'imagen' and msg.archivo %}
+                                    <img src="{{ msg.archivo.url }}" alt="imagen">
+                                    {% if msg.contenido %}<div class="mt-1">{{ msg.contenido|linebreaksbr }}</div>{% endif %}
+                                {% elif msg.tipo == 'video' and msg.archivo %}
+                                    <video controls><source src="{{ msg.archivo.url }}"></video>
+                                    {% if msg.contenido %}<div class="mt-1">{{ msg.contenido|linebreaksbr }}</div>{% endif %}
+                                {% elif msg.tipo == 'audio' and msg.archivo %}
+                                    <audio controls style="max-width:100%;"><source src="{{ msg.archivo.url }}"></audio>
+                                    {% if msg.contenido %}<div class="mt-1">{{ msg.contenido|linebreaksbr }}</div>{% endif %}
+                                {% elif msg.archivo %}
+                                    <a href="{{ msg.archivo.url }}" target="_blank" class="text-white text-decoration-underline">{{ msg.archivo.name|slice:'14:' }}</a>
+                                    {% if msg.contenido %}<div class="mt-1">{{ msg.contenido|linebreaksbr }}</div>{% endif %}
+                                {% else %}
+                                    {{ msg.contenido|linebreaksbr }}
+                                {% endif %}
+                            </div>
+                            <span class="msg-time">{{ msg.enviado|time:"H:i" }}</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="msg-row msg-other">
+                        <div class="msg-wrap">
+                            <div class="msg-bubble msg-bubble-other">
+                                {% if msg.tipo == 'texto' %}
+                                    {{ msg.contenido|linebreaksbr }}
+                                {% elif msg.tipo == 'imagen' and msg.archivo %}
+                                    <img src="{{ msg.archivo.url }}" alt="imagen">
+                                    {% if msg.contenido %}<div class="mt-1">{{ msg.contenido|linebreaksbr }}</div>{% endif %}
+                                {% elif msg.tipo == 'video' and msg.archivo %}
+                                    <video controls><source src="{{ msg.archivo.url }}"></video>
+                                    {% if msg.contenido %}<div class="mt-1">{{ msg.contenido|linebreaksbr }}</div>{% endif %}
+                                {% elif msg.tipo == 'audio' and msg.archivo %}
+                                    <audio controls style="max-width:100%;"><source src="{{ msg.archivo.url }}"></audio>
+                                    {% if msg.contenido %}<div class="mt-1">{{ msg.contenido|linebreaksbr }}</div>{% endif %}
+                                {% elif msg.archivo %}
+                                    <a href="{{ msg.archivo.url }}" target="_blank" class="text-decoration-underline">{{ msg.archivo.name|slice:'14:' }}</a>
+                                    {% if msg.contenido %}<div class="mt-1">{{ msg.contenido|linebreaksbr }}</div>{% endif %}
+                                {% else %}
+                                    {{ msg.contenido|linebreaksbr }}
+                                {% endif %}
+                            </div>
+                            <span class="msg-time">{{ msg.enviado|time:"H:i" }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% empty %}
+                    <p class="text-grey-500 font-xssss text-center mt-auto mb-auto">Sé el primero en escribir 👋</p>
+                {% endfor %}
+            </div>
+
+            <!-- Input de mensaje -->
+            <div class="chat-footer border-top p-3 bg-white">
+                <div class="form-group icon-right-input mb-0 d-flex align-items-center">
+                    <input type="file" id="conv-file" class="d-none" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip,.rar">
+                    <button class="btn bg-greylight text-grey-700 rounded-xl me-2 px-3 border-0" id="conv-attach" title="Adjuntar">
+                        <i class="feather-paperclip font-xs"></i>
+                    </button>
+                    <input type="text" placeholder="Escribe un mensaje..."
+                           class="form-control rounded-xl bg-greylight border-0 font-xssss fw-500 ps-3 flex-grow-1"
+                           id="conv-input">
+                    <button class="btn bg-primary-gradiant text-white rounded-xl ms-2 px-3 border-0" id="conv-send">
+                        <i class="feather-send font-xs"></i>
+                    </button>
+                </div>
+                <div class="chat-upload-status" id="conv-upload-status">
+                    <span class="chat-upload-text" id="conv-upload-text">Subiendo archivo...</span>
+                    <div class="chat-upload-bar"><span id="conv-upload-bar"></span></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    var miUsername   = '{{ request.user.username }}';
+    var otroUsername = '{{ otro_usuario.username }}';
+    var body    = document.getElementById('conv-body');
+    var input   = document.getElementById('conv-input');
+    var sendBtn = document.getElementById('conv-send');
+    var attachBtn = document.getElementById('conv-attach');
+    var fileInput = document.getElementById('conv-file');
+    var uploadWrap = document.getElementById('conv-upload-status');
+    var uploadText = document.getElementById('conv-upload-text');
+    var uploadBar = document.getElementById('conv-upload-bar');
+    var _ws      = null;
+    var _retries = 0;
+    var _typing  = false;
+    var _typingTimer = null;
+
+    // Scroll al final
+    if (body) body.scrollTop = body.scrollHeight;
+
+    // ── Sonido ──────────────────────────────────────────────────────────────
+    var _audioCtx = null;
+    function _playSound() {
+        try {
+            if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            var osc  = _audioCtx.createOscillator();
+            var gain = _audioCtx.createGain();
+            osc.connect(gain); gain.connect(_audioCtx.destination);
+            osc.frequency.value = 880; osc.type = 'sine';
+            gain.gain.setValueAtTime(0.25, _audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, _audioCtx.currentTime + 0.45);
+            osc.start(_audioCtx.currentTime); osc.stop(_audioCtx.currentTime + 0.45);
+        } catch(ex) {}
+    }
+
+    function _showTyping(visible) {
+        var el = document.getElementById('conv-typing-text');
+        if (el) el.style.display = visible ? 'inline' : 'none';
+    }
+
+    function _escapeHtml(t) {
+        return String(t || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function _escapeWithBreaks(t) {
+        return _escapeHtml(t).replace(/\n/g, '<br>');
+    }
+
+    function _renderContenido(data) {
+        var tipo = data.tipo || 'texto';
+        var txt = _escapeWithBreaks(data.mensaje || '');
+        var url = data.archivo_url || '';
+        var nombre = _escapeHtml(data.archivo_nombre || 'Adjunto');
+
+        if (tipo === 'imagen' && url) {
+            return '<img src="' + _escapeHtml(url) + '" alt="imagen" style="max-width:220px;border-radius:10px;">'
+                + (txt ? '<div style="margin-top:6px;">' + txt + '</div>' : '');
+        }
+        if (tipo === 'video' && url) {
+            return '<video controls style="max-width:240px;border-radius:10px;"><source src="' + _escapeHtml(url) + '"></video>'
+                + (txt ? '<div style="margin-top:6px;">' + txt + '</div>' : '');
+        }
+        if (tipo === 'audio' && url) {
+            return '<audio controls style="max-width:240px;"><source src="' + _escapeHtml(url) + '"></audio>'
+                + (txt ? '<div style="margin-top:6px;">' + txt + '</div>' : '');
+        }
+        if (tipo === 'archivo' && url) {
+            return '<a href="' + _escapeHtml(url) + '" target="_blank" class="text-decoration-underline">' + nombre + '</a>'
+                + (txt ? '<div style="margin-top:6px;">' + txt + '</div>' : '');
+        }
+        return txt;
+    }
+
+    function _appendMsg(data, soy_yo, hora) {
+        if (!body) return;
+        var row = document.createElement('div');
+        row.className = 'msg-row ' + (soy_yo ? 'msg-self' : 'msg-other');
+
+        var wrap = document.createElement('div');
+        wrap.className = 'msg-wrap';
+
+        var bubble = document.createElement('div');
+        bubble.className = 'msg-bubble ' + (soy_yo ? 'msg-bubble-self' : 'msg-bubble-other');
+        bubble.innerHTML = _renderContenido(data);
+
+        var time = document.createElement('div');
+        time.className = 'msg-time';
+        time.textContent = hora;
+
+        wrap.appendChild(bubble);
+        wrap.appendChild(time);
+        row.appendChild(wrap);
+        body.appendChild(row);
+        body.scrollTop = body.scrollHeight;
+    }
+
+    function _sendTyping(isTyping) {
+        if (!_ws || _ws.readyState !== 1) return;
+        if (_typing === isTyping) return;
+        _typing = isTyping;
+        _ws.send(JSON.stringify({ event: 'typing', escribiendo: isTyping }));
+    }
+
+    function _conectar() {
+        var proto = location.protocol === 'https:' ? 'wss' : 'ws';
+        _ws = new WebSocket(proto + '://' + location.host + '/ws/chat/' + otroUsername + '/');
+        _ws.onmessage = function (e) {
+            var data = JSON.parse(e.data);
+            if (data.event === 'mensaje') {
+                var soy_yo = data.emisor === miUsername;
+                _showTyping(false);
+                _appendMsg(data, soy_yo, data.enviado);
+                if (!soy_yo) _playSound();
+            } else if (data.event === 'typing' && data.emisor !== miUsername) {
+                _showTyping(data.escribiendo);
+            }
+        };
+        _ws.onclose = function () {
+            _typing = false;
+            var delay = Math.min(1000 * Math.pow(2, _retries), 30000);
+            _retries++;
+            setTimeout(_conectar, delay);
+        };
+        _ws.onopen = function () { _retries = 0; };
+    }
+
+    function _enviar() {
+        var msg = input ? input.value.trim() : '';
+        if (!msg || !_ws || _ws.readyState !== 1) return;
+        clearTimeout(_typingTimer);
+        _sendTyping(false);
+        _ws.send(JSON.stringify({ mensaje: msg }));
+        input.value = '';
+    }
+
+    function _enviarAdjunto(file) {
+        if (!file) return;
+        var fd = new FormData();
+        fd.append('archivo', file);
+        if (input && input.value.trim()) fd.append('mensaje', input.value.trim());
+
+        if (attachBtn) attachBtn.disabled = true;
+        if (sendBtn) sendBtn.disabled = true;
+        if (uploadWrap) uploadWrap.style.display = 'block';
+        if (uploadText) uploadText.textContent = 'Subiendo archivo... 0%';
+        if (uploadBar) uploadBar.style.width = '0%';
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/chat/enviar-adjunto/' + encodeURIComponent(otroUsername) + '/');
+        xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+        xhr.upload.onprogress = function (evt) {
+            if (!evt.lengthComputable) return;
+            var pct = Math.round((evt.loaded / evt.total) * 100);
+            if (uploadBar) uploadBar.style.width = pct + '%';
+            if (uploadText) uploadText.textContent = 'Subiendo archivo... ' + pct + '%';
+        };
+
+        xhr.onload = function () {
+            if (attachBtn) attachBtn.disabled = false;
+            if (sendBtn) sendBtn.disabled = false;
+            if (xhr.status >= 200 && xhr.status < 300) {
+                if (uploadBar) uploadBar.style.width = '100%';
+                if (uploadText) uploadText.textContent = 'Archivo enviado';
+                setTimeout(function () {
+                    if (uploadWrap) uploadWrap.style.display = 'none';
+                    if (uploadBar) uploadBar.style.width = '0%';
+                }, 900);
+                if (input) input.value = '';
+                if (fileInput) fileInput.value = '';
+            } else {
+                if (uploadText) uploadText.textContent = 'Error al subir archivo';
+            }
+        };
+
+        xhr.onerror = function () {
+            if (attachBtn) attachBtn.disabled = false;
+            if (sendBtn) sendBtn.disabled = false;
+            if (uploadText) uploadText.textContent = 'Error de conexión al subir';
+        };
+
+        xhr.send(fd);
+    }
+
+    if (sendBtn) sendBtn.addEventListener('click', _enviar);
+    if (attachBtn && fileInput) {
+        attachBtn.addEventListener('click', function(e){ e.preventDefault(); fileInput.click(); });
+        fileInput.addEventListener('change', function(){
+            if (this.files && this.files[0]) _enviarAdjunto(this.files[0]);
+        });
+    }
+    if (input) {
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); _enviar(); }
+        });
+        input.addEventListener('input', function () {
+            _sendTyping(true);
+            clearTimeout(_typingTimer);
+            _typingTimer = setTimeout(function () { _sendTyping(false); }, 2000);
+        });
+    }
+
+    // Presencia online en la cabecera
+    window.addEventListener('ws_global', function (e) {
+        var data = e.detail;
+        if (data.event !== 'user_presence' || data.username !== otroUsername) return;
+        var dot    = document.getElementById('conv-online-dot');
+        var status = document.getElementById('conv-status');
+        if (dot)    dot.className = 'position-absolute btn-round-xss bg-' + (data.online ? 'success' : 'secondary');
+        if (status) status.textContent = data.online ? 'En línea' : 'Desconectado';
+    });
+
+    _conectar();
+})();
+</script>
+{% endblock %}

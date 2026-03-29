@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.models import User
-from .models import Perfil, Album, Cancion
+from .models import Perfil, Album, Cancion, Publicacion, Historia
 
 
 class EditarPerfilForm(forms.ModelForm):
@@ -129,3 +129,109 @@ class CancionForm(forms.ModelForm):
             'archivo': 'Archivo de audio (MP3, WAV, etc.)',
             'numero': 'Número de pista',
         }
+
+
+# ── Formulario de Publicación ─────────────────────────────────────────────
+
+class PublicacionForm(forms.ModelForm):
+    class Meta:
+        model = Publicacion
+        fields = ['contenido', 'imagen']
+        widgets = {
+            'contenido': forms.Textarea(attrs={
+                'class': 'form-control rounded-xxl border-0 fw-500 font-xss bg-greylight',
+                'rows': 3,
+                'placeholder': '¿Qué estás pensando?',
+            }),
+            'imagen': forms.FileInput(attrs={
+                'class': 'form-control', 'accept': 'image/*',
+            }),
+        }
+        labels = {
+            'contenido': '',
+            'imagen': 'Foto (opcional)',
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        contenido = cleaned_data.get('contenido', '').strip()
+        imagen = cleaned_data.get('imagen')
+        encuesta_pregunta = (self.data.get('encuesta_pregunta') or '').strip()
+        encuesta_opcion1 = (self.data.get('encuesta_opcion1') or '').strip()
+        encuesta_opcion2 = (self.data.get('encuesta_opcion2') or '').strip()
+        encuesta2_pregunta = (self.data.get('encuesta2_pregunta') or '').strip()
+        encuesta2_opcion1 = (self.data.get('encuesta2_opcion1') or '').strip()
+        encuesta2_opcion2 = (self.data.get('encuesta2_opcion2') or '').strip()
+        tiene_encuesta_valida = bool(encuesta_pregunta and encuesta_opcion1 and encuesta_opcion2)
+        tiene_encuesta2_valida = bool(encuesta2_pregunta and encuesta2_opcion1 and encuesta2_opcion2)
+
+        if not contenido and not imagen and not (tiene_encuesta_valida or tiene_encuesta2_valida):
+            raise forms.ValidationError('Escribe algo o selecciona una imagen para publicar.')
+        return cleaned_data
+
+
+class HistoriaForm(forms.ModelForm):
+    ocultar_usernames = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control style2-input ps-3 fw-500 font-xssss',
+            'placeholder': 'Ocultar a (user1,user2) opcional',
+        }),
+        label='Ocultar a usuarios',
+    )
+    amigos_cercanos_usernames = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control style2-input ps-3 fw-500 font-xssss',
+            'placeholder': 'Mejores amigos (user1,user2) opcional',
+        }),
+        label='Lista de mejores amigos',
+    )
+
+    class Meta:
+        model = Historia
+        fields = ['archivo', 'texto', 'privacidad']
+        widgets = {
+            'archivo': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*,video/*',
+                'required': True,
+            }),
+            'texto': forms.TextInput(attrs={
+                'class': 'form-control style2-input ps-3 fw-500 font-xssss',
+                'placeholder': 'Texto opcional para tu historia',
+                'maxlength': 280,
+            }),
+            'privacidad': forms.Select(attrs={
+                'class': 'form-control style2-input ps-3 fw-600 font-xssss',
+            }),
+        }
+        labels = {
+            'archivo': 'Foto o video',
+            'texto': 'Texto (opcional)',
+            'privacidad': 'Privacidad',
+        }
+
+    def clean_archivo(self):
+        archivo = self.cleaned_data.get('archivo')
+        if not archivo:
+            raise forms.ValidationError('Debes seleccionar un archivo.')
+
+        ctype = (getattr(archivo, 'content_type', '') or '').lower()
+        if ctype.startswith('image/'):
+            return archivo
+        if ctype.startswith('video/'):
+            # 50MB para videos de historia
+            if archivo.size > 50 * 1024 * 1024:
+                raise forms.ValidationError('El video no debe superar 50MB.')
+            return archivo
+
+        raise forms.ValidationError('Formato no permitido. Usa imagen o video.')
+
+    def clean(self):
+        cleaned = super().clean()
+        privacidad = cleaned.get('privacidad')
+        amigos_raw = (cleaned.get('amigos_cercanos_usernames') or '').strip()
+        if privacidad == 'mejores_amigos' and not amigos_raw:
+            raise forms.ValidationError('Para "Mejores amigos", indica al menos un username en la lista.')
+        return cleaned

@@ -29,13 +29,57 @@
 
     <link rel="stylesheet" href="{% static 'sociala/css/lightbox.css' %}">
 
+    <style>
+        /* El tema sobreescribe opacity del backdrop a .9 tapando los modales — lo ocultamos */
+        .modal-backdrop { display: none !important; }
+        /* Aseguramos z-index correcto para todos los modales */
+        .modal  { z-index: 1055 !important; }
+        /* Modales que deben estar encima del story viewer */
+        #storyViewer            { z-index: 20010 !important; }
+        #createStoryModal       { z-index: 20005 !important; }
+        #publicacionChatModal   { z-index: 20010 !important; }
+
+        /* ── Móvil: ocultar barra inferior cuando hay modal abierto ── */
+        body.modal-open .app-footer { display: none !important; }
+
+        /* ── Móvil: modal scroll y botones siempre visibles ── */
+        @media (max-width: 991.98px) {
+            .modal-dialog {
+                margin: 0 auto !important;
+                max-height: 100dvh;
+                height: 100dvh;
+                display: flex;
+                align-items: flex-end;
+            }
+            .modal-dialog-centered {
+                align-items: center;
+            }
+            .modal-content {
+                max-height: 92dvh;
+                display: flex;
+                flex-direction: column;
+            }
+            .modal-body {
+                overflow-y: auto;
+                flex: 1 1 auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .modal-footer {
+                flex-shrink: 0;
+                position: sticky;
+                bottom: 0;
+                background: inherit;
+            }
+        }
+    </style>
+
 
 
 </head>
 
 
 
-<body class="color-theme-blue mont-font">
+<body class="{% if user_prefs %}color-theme-{{ user_prefs.color_tema }}{% if user_prefs.modo_oscuro %} theme-dark{% endif %}{% if user_prefs.menu_lateral %} menu-active{% endif %}{% else %}color-theme-blue{% endif %} mont-font">
 
 
 
@@ -57,7 +101,7 @@
 
                 <a href="/"><img src="{% static 'veriffAi.png' %}" alt="VeriffAi" style="height:40px;"></a>
 
-                <a href="#" class="mob-menu ms-auto me-2 chat-active-btn"><i class="feather-message-circle text-grey-900 font-sm btn-round-md bg-greylight"></i></a>
+                <a href="{% url 'chat_inbox' %}" class="mob-menu ms-auto me-2"><i class="feather-message-circle text-grey-900 font-sm btn-round-md bg-greylight"></i></a>
 
                 <a href="#" class="mob-menu me-2"><i class="feather-video text-grey-900 font-sm btn-round-md bg-greylight"></i></a>
 
@@ -93,59 +137,92 @@
 
 
 
-            <a href="#" class="p-2 text-center ms-auto menu-icon" id="dropdownMenu3" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-bs-toggle="dropdown"><span class="dot-count bg-warning"></span><i class="feather-bell font-xl text-current"></i></a>
+            <a href="#" class="p-2 text-center ms-auto menu-icon position-relative" id="dropdownMenu3" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-bs-toggle="dropdown">
+                {% if notificaciones_no_leidas %}<span class="dot-count bg-warning" id="notif-badge">{{ notificaciones_no_leidas }}</span>{% else %}<span class="dot-count d-none" id="notif-badge"></span>{% endif %}
+                <i class="feather-bell font-xl text-current"></i>
+            </a>
 
             <div class="dropdown-menu dropdown-menu-end p-4 rounded-3 border-0 shadow-lg" aria-labelledby="dropdownMenu3">
-
-                
-
-                <h4 class="fw-700 font-xss mb-4">Notification</h4>
-
-                <div class="card bg-transparent-card w-100 border-0 ps-5 mb-3">
-
-                    <img src="{% static 'sociala/images/user-8.png' %}" alt="user" class="w40 position-absolute left-0">
-
-                    <h5 class="font-xsss text-grey-900 mb-1 mt-0 fw-700 d-block">Hendrix Stamp <span class="text-grey-400 font-xsssss fw-600 float-right mt-1"> 3 min</span></h5>
-
-                    <h6 class="text-grey-500 fw-500 font-xssss lh-4">There are many variations of pass..</h6>
-
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h4 class="fw-700 font-xss mb-0">Notificaciones</h4>
+                    <a href="{% url 'notificaciones' %}" class="font-xsssss text-current fw-600">Ver todas</a>
                 </div>
-
-                <div class="card bg-transparent-card w-100 border-0 ps-5 mb-3">
-
-                    <img src="{% static 'sociala/images/user-4.png' %}" alt="user" class="w40 position-absolute left-0">
-
-                    <h5 class="font-xsss text-grey-900 mb-1 mt-0 fw-700 d-block">Goria Coast <span class="text-grey-400 font-xsssss fw-600 float-right mt-1"> 2 min</span></h5>
-
-                    <h6 class="text-grey-500 fw-500 font-xssss lh-4">Mobile Apps UI Designer is require..</h6>
-
+                <div id="notif-list">
+                {% for notif in notificaciones_dropdown %}
+                    <a href="{% url 'abrir_notificacion' notif.pk %}" class="card w-100 border-0 ps-5 mb-3 text-decoration-none position-relative {% if not notif.leida %}bg-lightblue{% else %}bg-transparent-card{% endif %}" style="padding-top:6px;padding-bottom:6px;">
+                        {% if notif.remitente.perfil.foto %}
+                            <img src="{{ notif.remitente.perfil.foto.url }}" alt="user" class="w40 position-absolute left-0" style="border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src='/static/sociala/images/profile-4.png';">
+                        {% elif notif.remitente.perfil.get_foto %}
+                            <img src="{{ notif.remitente.perfil.get_foto }}" alt="user" class="w40 position-absolute left-0" style="border-radius:50%;object-fit:cover;" onerror="this.onerror=null;this.src='/static/sociala/images/profile-4.png';">
+                        {% else %}
+                            <img src="{% static 'sociala/images/profile-4.png' %}" alt="user" class="w40 position-absolute left-0" style="border-radius:50%;object-fit:cover;">
+                        {% endif %}
+                        <h5 class="font-xsss text-grey-900 mb-1 mt-0 fw-700 d-block">
+                            {{ notif.remitente.perfil.nombre_completo }}
+                            <span class="text-grey-400 font-xsssss fw-600 float-right mt-1">{{ notif.creado|timesince }}</span>
+                        </h5>
+                        <h6 class="text-grey-500 fw-500 font-xssss lh-4">{{ notif.mensaje|truncatechars:48 }}</h6>
+                    </a>
+                {% empty %}
+                    <p class="text-grey-500 font-xssss text-center py-3 mb-0">Sin notificaciones</p>
+                {% endfor %}
                 </div>
-
-
-
-                <div class="card bg-transparent-card w-100 border-0 ps-5 mb-3">
-
-                    <img src="{% static 'sociala/images/user-7.png' %}" alt="user" class="w40 position-absolute left-0">
-
-                    <h5 class="font-xsss text-grey-900 mb-1 mt-0 fw-700 d-block">Surfiya Zakir <span class="text-grey-400 font-xsssss fw-600 float-right mt-1"> 1 min</span></h5>
-
-                    <h6 class="text-grey-500 fw-500 font-xssss lh-4">Mobile Apps UI Designer is require..</h6>
-
-                </div>
-
-                <div class="card bg-transparent-card w-100 border-0 ps-5">
-
-                    <img src="{% static 'sociala/images/user-6.png' %}" alt="user" class="w40 position-absolute left-0">
-
-                    <h5 class="font-xsss text-grey-900 mb-1 mt-0 fw-700 d-block">Victor Exrixon <span class="text-grey-400 font-xsssss fw-600 float-right mt-1"> 30 sec</span></h5>
-
-                    <h6 class="text-grey-500 fw-500 font-xssss lh-4">Mobile Apps UI Designer is require..</h6>
-
-                </div>
-
             </div>
 
-            <a href="#" class="p-2 text-center ms-3 menu-icon chat-active-btn"><i class="feather-message-square font-xl text-current"></i></a>
+            <a href="#" class="p-2 text-center ms-3 menu-icon position-relative" id="dropdownChat"
+               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-bs-toggle="dropdown">
+                {% if mensajes_no_leidos %}<span class="dot-count bg-warning" id="msg-badge">{{ mensajes_no_leidos }}</span>{% else %}<span class="dot-count d-none" id="msg-badge"></span>{% endif %}
+                <i class="feather-message-square font-xl text-current"></i>
+            </a>
+
+            <div class="dropdown-menu dropdown-menu-end p-4 rounded-3 border-0 shadow-lg" aria-labelledby="dropdownChat" style="min-width:300px;">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h4 class="fw-700 font-xss mb-0">Mensajes</h4>
+                    <a href="#" class="font-xsssss text-current fw-600" id="chat-dd-nuevo">Nuevo chat</a>
+                </div>
+                <div id="chat-dd-list">
+                {% if conversaciones_recientes %}
+                    {% for conv in conversaciones_recientes %}
+                    <a href="#"
+                       class="card w-100 border-0 ps-5 mb-2 text-decoration-none position-relative bg-transparent-card open-chat-btn"
+                       style="padding-top:6px;padding-bottom:6px;"
+                       data-username="{{ conv.usuario.username }}"
+                       data-nombre="{{ conv.usuario.perfil.nombre_completo }}"
+                       data-foto="{% if conv.usuario.perfil.foto %}{{ conv.usuario.perfil.foto.url }}{% elif conv.usuario.socialaccount_set.all %}{{ conv.usuario.socialaccount_set.all.0.get_avatar_url }}{% endif %}">
+                        <div class="position-absolute left-0" style="top:6px;">
+                            {% if conv.usuario.perfil.foto %}
+                                <img src="{{ conv.usuario.perfil.foto.url }}" alt="user"
+                                     class="w40 rounded-circle" style="object-fit:cover;"
+                                     onerror="this.src='{% static 'sociala/images/profile-4.png' %}';">
+                            {% elif conv.usuario.socialaccount_set.all %}
+                                <img src="{{ conv.usuario.socialaccount_set.all.0.get_avatar_url }}" alt="user" class="w40 rounded-circle">
+                            {% else %}
+                                <span class="btn-round-md bg-primary-gradiant text-white fw-700 font-xssss d-inline-flex align-items-center justify-content-center"
+                                      style="width:40px;height:40px;border-radius:50%;">{{ conv.usuario.username|slice:":1"|upper }}</span>
+                            {% endif %}
+                            <span class="position-absolute btn-round-xss {% if conv.online %}bg-success{% else %}bg-secondary{% endif %}"
+                                  style="bottom:0;right:0;border:2px solid #fff;"></span>
+                        </div>
+                        <h5 class="font-xsss text-grey-900 mb-1 mt-0 fw-700 d-block">
+                            {{ conv.usuario.perfil.nombre_completo }}
+                            {% if conv.no_leidos %}
+                                <span class="badge bg-warning text-white fw-700 font-xsssss rounded-xl float-right mt-1">{{ conv.no_leidos }}</span>
+                            {% endif %}
+                        </h5>
+                        <h6 class="text-grey-500 fw-500 font-xssss lh-4 mb-0">{{ conv.ultimo_mensaje|truncatechars:40 }}</h6>
+                    </a>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-grey-500 font-xssss text-center py-3 mb-0">Sin conversaciones aún</p>
+                {% endif %}
+                </div>
+                <!-- Nuevo chat: buscar usuarios -->
+                <div id="chat-dd-buscar" style="display:none;" class="mt-2">
+                    <input type="text" id="chat-dd-search-input" placeholder="Buscar usuario..."
+                           class="form-control bg-greylight border-0 rounded-xl font-xssss fw-500 ps-3 mb-2">
+                    <div id="chat-dd-search-results"></div>
+                </div>
+            </div>
 
             <div class="p-2 text-center ms-3 position-relative dropdown-menu-icon menu-icon cursor-pointer">
 
@@ -163,7 +240,7 @@
 
                             <label class="item-radio item-content">
 
-                                <input type="radio" name="color-radio" value="red" checked=""><i class="ti-check"></i>
+                                <input type="radio" name="color-radio" value="red" {% if user_prefs.color_tema == 'red' %}checked{% endif %}><i class="ti-check"></i>
 
                                 <span class="circle-color bg-red" style="background-color: #ff3b30;"></span>
 
@@ -175,7 +252,7 @@
 
                             <label class="item-radio item-content">
 
-                                <input type="radio" name="color-radio" value="green"><i class="ti-check"></i>
+                                <input type="radio" name="color-radio" value="green" {% if user_prefs.color_tema == 'green' %}checked{% endif %}><i class="ti-check"></i>
 
                                 <span class="circle-color bg-green" style="background-color: #4cd964;"></span>
 
@@ -187,7 +264,7 @@
 
                             <label class="item-radio item-content">
 
-                                <input type="radio" name="color-radio" value="blue" checked=""><i class="ti-check"></i>
+                                <input type="radio" name="color-radio" value="blue" {% if user_prefs.color_tema == 'blue' %}checked{% endif %}><i class="ti-check"></i>
 
                                 <span class="circle-color bg-blue" style="background-color: #132977;"></span>
 
@@ -199,7 +276,7 @@
 
                             <label class="item-radio item-content">
 
-                                <input type="radio" name="color-radio" value="pink"><i class="ti-check"></i>
+                                <input type="radio" name="color-radio" value="pink" {% if user_prefs.color_tema == 'pink' %}checked{% endif %}><i class="ti-check"></i>
 
                                 <span class="circle-color bg-pink" style="background-color: #ff2d55;"></span>
 
@@ -211,7 +288,7 @@
 
                             <label class="item-radio item-content">
 
-                                <input type="radio" name="color-radio" value="yellow"><i class="ti-check"></i>
+                                <input type="radio" name="color-radio" value="yellow" {% if user_prefs.color_tema == 'yellow' %}checked{% endif %}><i class="ti-check"></i>
 
                                 <span class="circle-color bg-yellow" style="background-color: #ffcc00;"></span>
 
@@ -223,7 +300,7 @@
 
                             <label class="item-radio item-content">
 
-                                <input type="radio" name="color-radio" value="orange"><i class="ti-check"></i>
+                                <input type="radio" name="color-radio" value="orange" {% if user_prefs.color_tema == 'orange' %}checked{% endif %}><i class="ti-check"></i>
 
                                 <span class="circle-color bg-orange" style="background-color: #ff9500;"></span>
 
@@ -235,7 +312,7 @@
 
                             <label class="item-radio item-content">
 
-                                <input type="radio" name="color-radio" value="gray"><i class="ti-check"></i>
+                                <input type="radio" name="color-radio" value="gray" {% if user_prefs.color_tema == 'gray' %}checked{% endif %}><i class="ti-check"></i>
 
                                 <span class="circle-color bg-gray" style="background-color: #8e8e93;"></span>
 
@@ -249,7 +326,7 @@
 
                             <label class="item-radio item-content">
 
-                                <input type="radio" name="color-radio" value="brown"><i class="ti-check"></i>
+                                <input type="radio" name="color-radio" value="brown" {% if user_prefs.color_tema == 'brown' %}checked{% endif %}><i class="ti-check"></i>
 
                                 <span class="circle-color bg-brown" style="background-color: #D2691E;"></span>
 
@@ -261,7 +338,7 @@
 
                             <label class="item-radio item-content">
 
-                                <input type="radio" name="color-radio" value="darkgreen"><i class="ti-check"></i>
+                                <input type="radio" name="color-radio" value="darkgreen" {% if user_prefs.color_tema == 'darkgreen' %}checked{% endif %}><i class="ti-check"></i>
 
                                 <span class="circle-color bg-darkgreen" style="background-color: #228B22;"></span>
 
@@ -273,7 +350,7 @@
 
                             <label class="item-radio item-content">
 
-                                <input type="radio" name="color-radio" value="deeppink"><i class="ti-check"></i>
+                                <input type="radio" name="color-radio" value="deeppink" {% if user_prefs.color_tema == 'deeppink' %}checked{% endif %}><i class="ti-check"></i>
 
                                 <span class="circle-color bg-deeppink" style="background-color: #FFC0CB;"></span>
 
@@ -285,7 +362,7 @@
 
                             <label class="item-radio item-content">
 
-                                <input type="radio" name="color-radio" value="cadetblue"><i class="ti-check"></i>
+                                <input type="radio" name="color-radio" value="cadetblue" {% if user_prefs.color_tema == 'cadetblue' %}checked{% endif %}><i class="ti-check"></i>
 
                                 <span class="circle-color bg-cadetblue" style="background-color: #5f9ea0;"></span>
 
@@ -297,7 +374,7 @@
 
                             <label class="item-radio item-content">
 
-                                <input type="radio" name="color-radio" value="darkorchid"><i class="ti-check"></i>
+                                <input type="radio" name="color-radio" value="darkorchid" {% if user_prefs.color_tema == 'darkorchid' %}checked{% endif %}><i class="ti-check"></i>
 
                                 <span class="circle-color bg-darkorchid" style="background-color: #9932cc;"></span>
 
@@ -315,7 +392,7 @@
 
                         <div class="d-inline float-right mt-1">
 
-                            <label class="toggle toggle-menu-color"><input type="checkbox"><span class="toggle-icon"></span></label>
+                            <label class="toggle toggle-menu-color"><input type="checkbox" id="headerbgswitch" {% if user_prefs.fondo_header %}checked{% endif %}><span class="toggle-icon"></span></label>
 
                         </div>
 
@@ -327,7 +404,7 @@
 
                         <div class="d-inline float-right mt-1">
 
-                            <label class="toggle toggle-menu"><input type="checkbox"><span class="toggle-icon"></span></label>
+                            <label class="toggle toggle-menu"><input type="checkbox" id="menuposswitch" {% if user_prefs.menu_lateral %}checked{% endif %}><span class="toggle-icon"></span></label>
 
                         </div>
 
@@ -339,7 +416,7 @@
 
                         <div class="d-inline float-right mt-1">
 
-                            <label class="toggle toggle-dark"><input type="checkbox"><span class="toggle-icon"></span></label>
+                            <label class="toggle toggle-dark"><input type="checkbox" id="darkmodeswitch" {% if user_prefs.modo_oscuro %}checked{% endif %}><span class="toggle-icon"></span></label>
 
                         </div>
 
@@ -355,7 +432,32 @@
 
 
 
-            <form method="POST" action="{% url 'account_logout' %}" class="d-inline">{% csrf_token %}<button type="submit" class="p-0 ms-3 menu-icon border-0 bg-transparent"><img src="{% if user.socialaccount_set.all %}{{ user.socialaccount_set.all.0.get_avatar_url }}{% else %}{% static 'sociala/images/profile-4.png' %}{% endif %}" alt="user" class="w40 mt--1 rounded-circle"></button></form>
+            <div class="p-0 ms-3 menu-icon position-relative d-none d-lg-inline-block">
+                <a href="#" id="dropdownAvatar" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                   class="d-block" style="line-height:0;">
+                    {% if user.perfil.foto %}
+                        <img src="{{ user.perfil.foto.url }}" alt="user" class="w40 mt--1 rounded-circle" style="object-fit:cover;">
+                    {% elif user.socialaccount_set.all %}
+                        <img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="user" class="w40 mt--1 rounded-circle">
+                    {% else %}
+                        <span class="btn-round-md bg-primary-gradiant text-white fw-700 font-xss d-inline-flex align-items-center justify-content-center" style="width:40px;height:40px;">{{ user.username|slice:":2"|upper }}</span>
+                    {% endif %}
+                </a>
+                <div class="dropdown-menu dropdown-menu-end border-0 shadow-lg rounded-3 p-2" aria-labelledby="dropdownAvatar" style="min-width:160px;">
+                    <a class="dropdown-item rounded-xl font-xssss fw-600 text-grey-700 py-2" href="{% url 'pagina_usuario' user.username %}">
+                        <i class="feather-user me-2 text-current"></i>Ver perfil
+                    </a>
+                    <a class="dropdown-item rounded-xl font-xssss fw-600 text-grey-700 py-2" href="{% url 'editar_perfil' %}">
+                        <i class="feather-settings me-2 text-grey-500"></i>Editar perfil
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <form method="POST" action="{% url 'account_logout' %}" class="m-0 p-0">{% csrf_token %}
+                        <button type="submit" class="dropdown-item rounded-xl font-xssss fw-600 text-danger py-2 border-0 bg-transparent w-100 text-start">
+                            <i class="feather-log-out me-2"></i>Cerrar sesión
+                        </button>
+                    </form>
+                </div>
+            </div>
 
             
 
@@ -457,261 +559,62 @@
 
                 <div class="section full pe-3 ps-4 pt-4 position-relative feed-body">
 
-                    <h4 class="font-xsssss text-grey-500 text-uppercase fw-700 ls-3">CONTACTS</h4>
+                    <!-- Encabezado con contador de en línea -->
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h4 class="font-xsssss text-grey-500 text-uppercase fw-700 ls-3 mb-0">Contactos</h4>
+                        <span class="font-xsssss fw-700" id="online-count-label" style="color:#4cd964;">
+                            <span id="online-count">{{ contactos_online_count }}</span> en línea
+                        </span>
+                    </div>
 
-                    <ul class="list-group list-group-flush">
-
-                        <li class="bg-transparent list-group-item no-icon pe-0 ps-0 pt-2 pb-2 border-0 d-flex align-items-center">
-
-                            <figure class="avatar float-left mb-0 me-2">
-
-                                <img src="{% static 'sociala/images/user-8.png' %}" alt="image" class="w35">
-
+                    <ul class="list-group list-group-flush" id="sidebar-contacts">
+                    {% if user.is_authenticated %}
+                    {% for item in contactos_sidebar %}
+                        <li class="bg-transparent list-group-item no-icon pe-0 ps-0 pt-2 pb-2 border-0 d-flex align-items-center sidebar-contact-item"
+                            id="sidebar-item-{{ item.usuario.id }}"
+                            data-online="{% if item.online %}1{% else %}0{% endif %}"
+                            data-username="{{ item.usuario.username }}"
+                            data-nombre="{{ item.usuario.perfil.nombre_completo }}"
+                            data-foto="{% if item.usuario.perfil.foto %}{{ item.usuario.perfil.foto.url }}{% elif item.usuario.socialaccount_set.all %}{{ item.usuario.socialaccount_set.all.0.get_avatar_url }}{% endif %}">
+                            <figure class="avatar float-left mb-0 me-2 position-relative">
+                                {% if item.usuario.perfil.foto %}
+                                    <img src="{{ item.usuario.perfil.foto.url }}" alt="{{ item.usuario.username }}" class="w35 rounded-circle" style="object-fit:cover;" onerror="this.onerror=null;this.src='/static/sociala/images/user-12.png';">
+                                {% elif item.usuario.socialaccount_set.all %}
+                                    <img src="{{ item.usuario.socialaccount_set.all.0.get_avatar_url }}" alt="{{ item.usuario.username }}" class="w35 rounded-circle">
+                                {% else %}
+                                    <span class="btn-round-sm bg-primary-gradiant text-white fw-700 font-xssss d-flex align-items-center justify-content-center" style="width:35px;height:35px;border-radius:50%;">{{ item.usuario.username|slice:":1"|upper }}</span>
+                                {% endif %}
+                                <!-- Dot de presencia sobre el avatar -->
+                                <span class="position-absolute {% if item.online %}online-pulse{% endif %}"
+                                      id="online-dot-{{ item.usuario.id }}"
+                                      style="width:11px;height:11px;border-radius:50%;border:2px solid #fff;bottom:0;right:0;background:{% if item.online %}#4cd964{% else %}#adb5bd{% endif %};"
+                                      title="{% if item.online %}En línea{% else %}Desconectado{% endif %}"></span>
                             </figure>
-
-                            <h3 class="fw-700 mb-0 mt-0">
-
-                                <a class="font-xssss text-grey-600 d-block text-dark model-popup-chat" href="#">Hurin Seary</a>
-
-                            </h3>
-
-                            <span class="badge badge-primary text-white badge-pill fw-500 mt-0">2</span>
-
+                            <div class="flex-grow-1 overflow-hidden">
+                                <a class="font-xssss fw-700 text-grey-900 d-block text-truncate open-chat-btn"
+                                   href="#"
+                                   data-username="{{ item.usuario.username }}"
+                                   data-nombre="{{ item.usuario.perfil.nombre_completo }}"
+                                   data-foto="{% if item.usuario.perfil.foto %}{{ item.usuario.perfil.foto.url }}{% elif item.usuario.socialaccount_set.all %}{{ item.usuario.socialaccount_set.all.0.get_avatar_url }}{% endif %}">
+                                    {{ item.usuario.perfil.nombre_completo }}
+                                </a>
+                                <span class="font-xsssss fw-500 sidebar-status-text-{{ item.usuario.id }}"
+                                      style="color:{% if item.online %}#4cd964{% else %}#adb5bd{% endif %};">
+                                    {% if item.online %}En línea{% else %}Desconectado{% endif %}
+                                </span>
+                            </div>
                         </li>
-
-                        <li class="bg-transparent list-group-item no-icon pe-0 ps-0 pt-2 pb-2 border-0 d-flex align-items-center">
-
-                            <figure class="avatar float-left mb-0 me-2">
-
-                                <img src="{% static 'sociala/images/user-7.png' %}" alt="image" class="w35">
-
-                            </figure>
-
-                            <h3 class="fw-700 mb-0 mt-0">
-
-                                <a class="font-xssss text-grey-600 d-block text-dark model-popup-chat" href="#">Victor Exrixon</a>
-
-                            </h3>
-
-                            <span class="bg-success ms-auto btn-round-xss"></span>
-
+                    {% empty %}
+                        <li class="bg-transparent list-group-item no-icon pe-0 ps-0 pt-2 pb-2 border-0" id="sidebar-empty-msg">
+                            <p class="text-grey-500 font-xssss mb-0">Sigue usuarios para chatear aquí</p>
                         </li>
-
-                        <li class="bg-transparent list-group-item no-icon pe-0 ps-0 pt-2 pb-2 border-0 d-flex align-items-center">
-
-                            <figure class="avatar float-left mb-0 me-2">
-
-                                <img src="{% static 'sociala/images/user-6.png' %}" alt="image" class="w35">
-
-                            </figure>
-
-                            <h3 class="fw-700 mb-0 mt-0">
-
-                                <a class="font-xssss text-grey-600 d-block text-dark model-popup-chat" href="#">Surfiya Zakir</a>
-
-                            </h3>
-
-                            <span class="bg-warning ms-auto btn-round-xss"></span>
-
-                        </li>
-
-                        <li class="bg-transparent list-group-item no-icon pe-0 ps-0 pt-2 pb-2 border-0 d-flex align-items-center">
-
-                            <figure class="avatar float-left mb-0 me-2">
-
-                                <img src="{% static 'sociala/images/user-5.png' %}" alt="image" class="w35">
-
-                            </figure>
-
-                            <h3 class="fw-700 mb-0 mt-0">
-
-                                <a class="font-xssss text-grey-600 d-block text-dark model-popup-chat" href="#">Goria Coast</a>
-
-                            </h3>
-
-                            <span class="bg-success ms-auto btn-round-xss"></span>
-
-                        </li>
-
-                        <li class="bg-transparent list-group-item no-icon pe-0 ps-0 pt-2 pb-2 border-0 d-flex align-items-center">
-
-                            <figure class="avatar float-left mb-0 me-2">
-
-                                <img src="{% static 'sociala/images/user-4.png' %}" alt="image" class="w35">
-
-                            </figure>
-
-                            <h3 class="fw-700 mb-0 mt-0">
-
-                                <a class="font-xssss text-grey-600 d-block text-dark model-popup-chat" href="#">Hurin Seary</a>
-
-                            </h3>
-
-                            <span class="badge mt-0 text-grey-500 badge-pill pe-0 font-xsssss">4:09 pm</span>
-
-                        </li>
-
-                        <li class="bg-transparent list-group-item no-icon pe-0 ps-0 pt-2 pb-2 border-0 d-flex align-items-center">
-
-                            <figure class="avatar float-left mb-0 me-2">
-
-                                <img src="{% static 'sociala/images/user-3.png' %}" alt="image" class="w35">
-
-                            </figure>
-
-                            <h3 class="fw-700 mb-0 mt-0">
-
-                                <a class="font-xssss text-grey-600 d-block text-dark model-popup-chat" href="#">David Goria</a>
-
-                            </h3>
-
-                            <span class="badge mt-0 text-grey-500 badge-pill pe-0 font-xsssss">2 days</span>
-
-                        </li>
-
-                        <li class="bg-transparent list-group-item no-icon pe-0 ps-0 pt-2 pb-2 border-0 d-flex align-items-center">
-
-                            <figure class="avatar float-left mb-0 me-2">
-
-                                <img src="{% static 'sociala/images/user-2.png' %}" alt="image" class="w35">
-
-                            </figure>
-
-                            <h3 class="fw-700 mb-0 mt-0">
-
-                                <a class="font-xssss text-grey-600 d-block text-dark model-popup-chat" href="#">Seary Victor</a>
-
-                            </h3>
-
-                            <span class="bg-success ms-auto btn-round-xss"></span>
-
-                        </li>
-
-                        <li class="bg-transparent list-group-item no-icon pe-0 ps-0 pt-2 pb-2 border-0 d-flex align-items-center">
-
-                            <figure class="avatar float-left mb-0 me-2">
-
-                                <img src="{% static 'sociala/images/user-12.png' %}" alt="image" class="w35">
-
-                            </figure>
-
-                            <h3 class="fw-700 mb-0 mt-0">
-
-                                <a class="font-xssss text-grey-600 d-block text-dark model-popup-chat" href="#">Ana Seary</a>
-
-                            </h3>
-
-                            <span class="bg-success ms-auto btn-round-xss"></span>
-
-                        </li>
-
-                        
-
+                    {% endfor %}
+                    {% endif %}
                     </ul>
-
                 </div>
 
-                <div class="section full pe-3 ps-4 pt-4 pb-4 position-relative feed-body">
-
-                    <h4 class="font-xsssss text-grey-500 text-uppercase fw-700 ls-3">GROUPS</h4>
-
-                    <ul class="list-group list-group-flush">
-
-                        <li class="bg-transparent list-group-item no-icon pe-0 ps-0 pt-2 pb-2 border-0 d-flex align-items-center">
-
-                            
-
-                            <span class="btn-round-sm bg-primary-gradiant me-3 ls-3 text-white font-xssss fw-700">UD</span>
-
-                            <h3 class="fw-700 mb-0 mt-0">
-
-                                <a class="font-xssss text-grey-600 d-block text-dark model-popup-chat" href="#">Studio Express</a>
-
-                            </h3>
-
-                            <span class="badge mt-0 text-grey-500 badge-pill pe-0 font-xsssss">2 min</span>
-
-                        </li>
-
-                        <li class="bg-transparent list-group-item no-icon pe-0 ps-0 pt-2 pb-2 border-0 d-flex align-items-center">
-
-                            
-
-                            <span class="btn-round-sm bg-gold-gradiant me-3 ls-3 text-white font-xssss fw-700">UD</span>
-
-                            <h3 class="fw-700 mb-0 mt-0">
-
-                                <a class="font-xssss text-grey-600 d-block text-dark model-popup-chat" href="#">Armany Design</a>
-
-                            </h3>
-
-                            <span class="bg-warning ms-auto btn-round-xss"></span>
-
-                        </li>
-
-                        <li class="bg-transparent list-group-item no-icon pe-0 ps-0 pt-2 pb-2 border-0 d-flex align-items-center">
-
-                            
-
-                            <span class="btn-round-sm bg-mini-gradiant me-3 ls-3 text-white font-xssss fw-700">UD</span>
-
-                            <h3 class="fw-700 mb-0 mt-0">
-
-                                <a class="font-xssss text-grey-600 d-block text-dark model-popup-chat" href="#">De fabous</a>
-
-                            </h3>
-
-                            <span class="bg-success ms-auto btn-round-xss"></span>
-
-                        </li>
-
-                    </ul>
-
-                </div>
-
-                <div class="section full pe-3 ps-4 pt-0 pb-4 position-relative feed-body">
-
-                    <h4 class="font-xsssss text-grey-500 text-uppercase fw-700 ls-3">Pages</h4>
-
-                    <ul class="list-group list-group-flush">
-
-                        <li class="bg-transparent list-group-item no-icon pe-0 ps-0 pt-2 pb-2 border-0 d-flex align-items-center">
-
-                            
-
-                            <span class="btn-round-sm bg-primary-gradiant me-3 ls-3 text-white font-xssss fw-700">UD</span>
-
-                            <h3 class="fw-700 mb-0 mt-0">
-
-                                <a class="font-xssss text-grey-600 d-block text-dark model-popup-chat" href="#">Armany Seary</a>
-
-                            </h3>
-
-                            <span class="bg-success ms-auto btn-round-xss"></span>
-
-                        </li>
-
-                        <li class="bg-transparent list-group-item no-icon pe-0 ps-0 pt-2 pb-2 border-0 d-flex align-items-center">
-
-                            
-
-                            <span class="btn-round-sm bg-gold-gradiant me-3 ls-3 text-white font-xssss fw-700">UD</span>
-
-                            <h3 class="fw-700 mb-0 mt-0">
-
-                                <a class="font-xssss text-grey-600 d-block text-dark model-popup-chat" href="#">Entropio Inc</a>
-
-                            </h3>
-
-                            <span class="bg-success ms-auto btn-round-xss"></span>
-
-                        </li>
-
-                        
-
-                    </ul>
-
-                </div>
+            </div>
+        </div></div>
 
 
 
@@ -737,7 +640,7 @@
 
             <a href="#" class="nav-content-bttn"><i class="feather-layers"></i></a>
 
-            <a href="{% url 'perfil' %}" class="nav-content-bttn"><img src="{% static 'sociala/images/female-profile.png' %}" alt="user" class="w30 shadow-xss"></a>
+            <a href="{% url 'perfil' %}" class="nav-content-bttn">{% if user.is_authenticated and user.perfil.foto %}<img src="{{ user.perfil.foto.url }}" alt="user" class="w30 shadow-xss rounded-circle" style="object-fit:cover;">{% elif user.is_authenticated and user.socialaccount_set.all %}<img src="{{ user.socialaccount_set.all.0.get_avatar_url }}" alt="user" class="w30 shadow-xss rounded-circle">{% else %}<img src="{% static 'sociala/images/female-profile.png' %}" alt="user" class="w30 shadow-xss">{% endif %}</a>
 
         </div>
 
@@ -788,17 +691,21 @@
                     <div class="card w-100 border-0 rounded-3 overflow-hidden bg-gradiant-bottom bg-gradiant-top">
 
                         <div class="owl-carousel owl-theme dot-style3 story-slider owl-dot-nav nav-none">
-
-                            <div class="item"><img src="{% static 'sociala/images/story-5.jpg' %}" alt="image"></div>
-
-                            <div class="item"><img src="{% static 'sociala/images/story-6.jpg' %}" alt="image"></div>
-
-                            <div class="item"><img src="{% static 'sociala/images/story-7.jpg' %}" alt="image"></div>
-
-                            <div class="item"><img src="{% static 'sociala/images/story-8.jpg' %}" alt="image"></div>
-
-                            
-
+                            {% if historias_preview %}
+                                {% for h in historias_preview %}
+                                    <div class="item">
+                                        {% if h.tipo == 'video' %}
+                                            <video autoplay muted loop playsinline><source src="{{ h.archivo.url }}"></video>
+                                        {% else %}
+                                            <img src="{{ h.archivo.url }}" alt="historia">
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="item d-flex align-items-center justify-content-center" style="min-height:320px;background:#111;color:#fff;">
+                                    <span class="font-xssss">Sin historias activas</span>
+                                </div>
+                            {% endif %}
                         </div>
 
                     </div>
@@ -821,62 +728,798 @@
 
 
 
-    <div class="modal-popup-chat">
+    <style>
+    /* Chat popup — ubicación fija esquina inferior derecha */
+    .modal-popup-chat { position: fixed; bottom: 0; right: 24px; z-index: 9999; width: 380px; }
+    .cp-msg-count {
+        background: #ff3b30; color: #fff; border-radius: 50%;
+        font-size: 10px; width: 18px; height: 18px;
+        display: none; align-items: center; justify-content: center;
+        font-weight: 700; flex-shrink: 0;
+    }
+    #chat-popup.cp-minimized .cp-msg-count { display: inline-flex; }
+    .modal-popup-chat .message-content {
+        display: inline-block !important;
+        width: auto !important;
+        min-width: 0 !important;
+        white-space: normal !important;
+        word-break: keep-all !important;
+        overflow-wrap: break-word !important;
+        hyphens: none !important;
+        line-break: auto !important;
+    }
+    .modal-popup-chat .message-content img,
+    .modal-popup-chat .message-content video,
+    .modal-popup-chat .message-content audio {
+        max-width: 100% !important;
+        height: auto;
+        display: block;
+    }
+    .modal-popup-chat .modal-popup-body {
+        overflow-x: hidden !important;
+    }
+    @media (max-width: 600px) {
+        .modal-popup-chat {
+            left: 8px !important;
+            right: 8px !important;
+            width: auto !important;
+            bottom: 0 !important;
+        }
+        .modal-popup-wrap { border-radius: 14px 14px 0 0 !important; }
+        .modal-popup-body { max-height: 54vh !important; }
+        .modal-popup-chat .message-content {
+            max-width: min(82vw, 360px) !important;
+        }
+    }
+    /* === Sidebar presencia en línea === */
+    @keyframes pulse-online {
+        0%   { box-shadow: 0 0 0 0 rgba(76,217,100,0.7); }
+        70%  { box-shadow: 0 0 0 6px rgba(76,217,100,0); }
+        100% { box-shadow: 0 0 0 0 rgba(76,217,100,0); }
+    }
+    .online-pulse {
+        animation: pulse-online 2s infinite;
+    }
+    .sidebar-contact-item {
+        transition: background .15s;
+        border-radius: 8px !important;
+        padding-left: 6px !important;
+        padding-right: 6px !important;
+    }
+    .sidebar-contact-item:hover { background: rgba(0,0,0,.04) !important; }
+    .sidebar-contact-item[data-online="0"] { opacity: .6; }
 
+    .popup-upload-status {
+        display: none;
+        padding: 0 12px 8px;
+    }
+    .popup-upload-text {
+        display: block;
+        font-size: 11px;
+        color: #7a8597;
+        margin-bottom: 4px;
+    }
+    .popup-upload-bar {
+        width: 100%;
+        height: 5px;
+        border-radius: 8px;
+        background: #eceff4;
+        overflow: hidden;
+    }
+    .popup-upload-bar > span {
+        display: block;
+        width: 0;
+        height: 100%;
+        background: linear-gradient(90deg,#1e74fd,#4ca0ff);
+        transition: width .2s ease;
+    }
+
+    /* Evita texto en columna (h\nn\no\nl\na) en mobile */
+    @media (max-width: 991.98px) {
+        .main-content .middle-sidebar-bottom {
+            padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
+        }
+        .navigation .nav-content {
+            padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important;
+        }
+        .navigation .nav-wrap:last-child {
+            margin-bottom: calc(92px + env(safe-area-inset-bottom)) !important;
+        }
+        .chat-wrapper,
+        .feed-body {
+            padding-bottom: calc(20px + env(safe-area-inset-bottom)) !important;
+        }
+        .navigation .nav-caption,
+        .navigation .nav-content ul li:not(.logo) a span,
+        #sidebar-contacts .sidebar-contact-item a,
+        #sidebar-contacts .sidebar-contact-item span,
+        .dropdown-menu h4,
+        .dropdown-menu h5,
+        .dropdown-menu h6,
+        .dropdown-menu p {
+            writing-mode: horizontal-tb !important;
+            text-orientation: mixed !important;
+            word-break: normal !important;
+            overflow-wrap: break-word !important;
+            white-space: normal !important;
+        }
+    }
+
+    /* ─── Dark mode global: elementos que el tema no cubre ─── */
+    body.theme-dark .dropdown-menu-settings,
+    body.theme-dark .switchcolor-wrap {
+        background: #293145 !important;
+        border-color: #3a4a69 !important;
+        box-shadow: 0 4px 24px rgba(0,0,0,.4) !important;
+    }
+    body.theme-dark .dropdown-menu-settings h4,
+    body.theme-dark .dropdown-menu-settings h6 {
+        color: #c8d6e8 !important;
+    }
+    body.theme-dark .toggle-icon {
+        background: #3a4a69 !important;
+    }
+    body.theme-dark .nav-header {
+        background: #293145 !important;
+    }
+    body.theme-dark .nav-header .logo-text,
+    body.theme-dark .nav-header span,
+    body.theme-dark .nav-header p {
+        color: #c8d6e8 !important;
+    }
+    body.theme-dark input,
+    body.theme-dark textarea,
+    body.theme-dark select {
+        background-color: #1e2a40 !important;
+        color: #c8d6e8 !important;
+        border-color: #3a4a69 !important;
+    }
+    body.theme-dark input::placeholder,
+    body.theme-dark textarea::placeholder {
+        color: #6e88aa !important;
+    }
+    body.theme-dark .bg-white {
+        background-color: #293145 !important;
+    }
+    body.theme-dark .bg-greylight,
+    body.theme-dark .theme-dark-bg {
+        background-color: #1e2a40 !important;
+    }
+    body.theme-dark .modal-popup-chat .modal-popup-wrap {
+        background: #293145 !important;
+    }
+    body.theme-dark .modal-popup-chat .modal-popup-header {
+        background: #1e2a40 !important;
+    }
+    body.theme-dark .modal-popup-chat .modal-popup-body {
+        background: #1a2236 !important;
+    }
+    body.theme-dark .modal-popup-chat .modal-popup-footer {
+        background: #293145 !important;
+        border-top-color: #3a4a69 !important;
+    }
+    body.theme-dark .modal-popup-chat .message-content {
+        color: #c8d6e8 !important;
+        background-color: #2d3a55 !important;
+    }
+    body.theme-dark .modal-popup-chat .message.self .message-content {
+        background-color: var(--theme-color, #1d72f4) !important;
+        color: #fff !important;
+    }
+    body.theme-dark .modal-popup-chat input[type="text"] {
+        background: #1e2a40 !important;
+        color: #c8d6e8 !important;
+    }
+    body.theme-dark .border-0.border-top-xs,
+    body.theme-dark .border-top {
+        border-color: #3a4a69 !important;
+    }
+    body.theme-dark .text-grey-900,
+    body.theme-dark .text-grey-800 {
+        color: #c8d6e8 !important;
+    }
+    body.theme-dark .text-grey-500,
+    body.theme-dark .text-grey-400 {
+        color: #8898aa !important;
+    }
+    </style>
+
+    <div class="modal-popup-chat" id="chat-popup" style="display:none;">
         <div class="modal-popup-wrap bg-white p-0 shadow-lg rounded-3">
 
+            <!-- Cabecera -->
             <div class="modal-popup-header w-100 border-bottom">
-
                 <div class="card p-3 d-block border-0 d-block">
-
                     <figure class="avatar mb-0 float-left me-2">
-
-                        <img src="{% static 'sociala/images/user-12.png' %}" alt="image" class="w35 me-1">
-
+                        <img src="" id="chat-popup-foto" alt="user"
+                             class="w35 me-1 rounded-circle"
+                             style="object-fit:cover;display:none;"
+                             onerror="this.style.display='none';document.getElementById('chat-popup-initials').style.display='inline-flex';">
+                        <span id="chat-popup-initials"
+                              class="btn-round-sm bg-primary-gradiant text-white fw-700 font-xss d-none align-items-center justify-content-center"
+                              style="width:35px;height:35px;border-radius:50%;"></span>
                     </figure>
-
-                    <h5 class="fw-700 text-primary font-xssss mt-1 mb-1">Hendrix Stamp</h5>
-
-                    <h4 class="text-grey-500 font-xsssss mt-0 mb-0"><span class="d-inline-block bg-success btn-round-xss m-0"></span> Available</h4>
-
-                    <a href="#" class="font-xssss position-absolute right-0 top-0 mt-3 me-4"><i class="ti-close text-grey-900 mt-2 d-inline-block"></i></a>
-
+                    <h5 class="fw-700 text-primary font-xssss mt-1 mb-1" id="chat-popup-nombre">---</h5>
+                    <h4 class="text-grey-500 font-xsssss mt-0 mb-0">
+                        <span class="d-inline-block btn-round-xss m-0 bg-secondary" id="chat-popup-status-dot"></span>
+                        <span id="chat-popup-status">Desconectado</span>
+                    </h4>
+                    <!-- Controles: badge + minimizar + cerrar -->
+                    <div class="d-flex align-items-center position-absolute" style="right:12px;top:12px;gap:8px;">
+                        <span class="cp-msg-count" id="chat-popup-new-count">0</span>
+                        <a href="#" id="chat-popup-minimize" class="text-grey-500" title="Minimizar"
+                           onclick="event.preventDefault();event.stopPropagation();window._chatToggleMinimize&&window._chatToggleMinimize();">
+                            <i class="feather-minus font-xss d-inline-block"></i>
+                        </a>
+                        <a href="#" id="chat-popup-close" class="text-grey-900" title="Cerrar"
+                           onclick="event.preventDefault();event.stopPropagation();window._chatCerrar&&window._chatCerrar();">
+                            <i class="ti-close font-xssss mt-1 d-inline-block"></i>
+                        </a>
+                    </div>
                 </div>
-
             </div>
 
-            <div class="modal-popup-body w-100 p-3 h-auto">
-
-                <div class="message"><div class="message-content font-xssss lh-24 fw-500">Hi, how can I help you?</div></div>
-
-                <div class="date-break font-xsssss lh-24 fw-500 text-grey-500 mt-2 mb-2">Mon 10:20am</div>
-
-                <div class="message self text-right mt-2"><div class="message-content font-xssss lh-24 fw-500">I want those files for you. I want you to send 1 PDF and 1 image file.</div></div>
-
-                <div class="snippet pt-3 ps-4 pb-2 pe-3 mt-2 bg-grey rounded-xl float-right" data-title=".dot-typing"><div class="stage"><div class="dot-typing"></div></div></div>
-
-                <div class="clearfix"></div>
-
-            </div>
-
-            <div class="modal-popup-footer w-100 border-top">
-
-                <div class="card p-3 d-block border-0 d-block">
-
-                    <div class="form-group icon-right-input style1-input mb-0"><input type="text" placeholder="Start typing.." class="form-control rounded-xl bg-greylight border-0 font-xssss fw-500 ps-3"><i class="feather-send text-grey-500 font-md"></i></div>
-
+            <!-- Cuerpo (se oculta al minimizar) -->
+            <div id="chat-popup-body-wrap">
+                <div class="modal-popup-body w-100 p-3 h-auto" id="chat-popup-body"
+                     style="min-height:150px;max-height:300px;overflow-y:auto;">
+                    <p class="text-grey-500 font-xssss text-center mt-3">Cargando mensajes...</p>
                 </div>
-
+                <!-- Indicador de escritura -->
+                <div style="padding:3px 16px;min-height:18px;">
+                    <span id="chat-popup-typing-text"
+                          style="font-size:11px;color:#aaa;font-style:italic;display:none;">escribiendo...</span>
+                </div>
+                <!-- Footer con input -->
+                <div class="modal-popup-footer w-100 border-top">
+                    <div class="card p-3 d-block border-0 d-block">
+                        <div class="form-group icon-right-input style1-input mb-0">
+                            <input type="file" id="chat-popup-file" class="d-none" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip,.rar">
+                            <i class="feather-paperclip text-grey-500 font-md cursor-pointer" id="chat-popup-attach" style="right:40px;"></i>
+                            <input type="text" placeholder="Escribe un mensaje..."
+                                   class="form-control rounded-xl bg-greylight border-0 font-xssss fw-500 ps-3"
+                                   id="chat-popup-input">
+                            <i class="feather-send text-grey-500 font-md cursor-pointer" id="chat-popup-send"></i>
+                        </div>
+                    </div>
+                    <div class="popup-upload-status" id="chat-popup-upload-status">
+                        <span class="popup-upload-text" id="chat-popup-upload-text">Subiendo archivo...</span>
+                        <div class="popup-upload-bar"><span id="chat-popup-upload-bar"></span></div>
+                    </div>
+                </div>
             </div>
 
-        </div> 
-
+        </div>
     </div>
 
 
 
 
+    {% if user.is_authenticated %}
+    <script>
+    (function () {
+        'use strict';
+        var _wsGRetries = 0;
+        var _csrfToken = '{{ csrf_token }}';
 
+        // ── Sonido de notificación ──────────────────────────────────────────
+        var _audioCtx = null;
+        function _playSound() {
+            try {
+                if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                var osc  = _audioCtx.createOscillator();
+                var gain = _audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(_audioCtx.destination);
+                osc.frequency.value = 880;
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.25, _audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, _audioCtx.currentTime + 0.45);
+                osc.start(_audioCtx.currentTime);
+                osc.stop(_audioCtx.currentTime + 0.45);
+            } catch(ex) {}
+        }
+
+        // ── WebSocket global ────────────────────────────────────────────────
+        function _conectarGlobal() {
+            var proto = location.protocol === 'https:' ? 'wss' : 'ws';
+            var ws = new WebSocket(proto + '://' + location.host + '/ws/global/');
+            window._globalWS = ws;
+
+            ws.onmessage = function (e) {
+                var data = JSON.parse(e.data);
+                window.dispatchEvent(new CustomEvent('ws_global', { detail: data }));
+
+                if (data.event === 'notificacion') {
+                    _addToBell(data.remitente_nombre || '', data.remitente_foto || '', data.mensaje || '', data.url || '#');
+                } else if (data.event === 'chat_mensaje') {
+                    // Si el popup ya está abierto con este usuario el chat-WS se encarga; solo notificar campana
+                    if (_chatOtroUsername !== data.emisor) {
+                        _playSound();
+                        _addToBell(
+                            data.emisor_nombre || data.emisor,
+                            data.emisor_foto  || '',
+                            '💬 ' + (data.mensaje || ''),
+                            '/chat/' + data.emisor + '/'
+                        );
+                    }
+                    // Si el popup está minimizado con ese usuario, incrementar badge
+                    var popup = document.getElementById('chat-popup');
+                    if (popup && popup.style.display !== 'none' && popup.classList.contains('cp-minimized')
+                        && _chatOtroUsername === data.emisor) {
+                        _incPopupBadge();
+                    }
+                }
+            };
+
+            ws.onclose = function () {
+                var delay = Math.min(1000 * Math.pow(2, _wsGRetries), 30000);
+                _wsGRetries++;
+                setTimeout(_conectarGlobal, delay);
+            };
+            ws.onopen = function () { _wsGRetries = 0; };
+        }
+
+        function _escapeHtml(t) {
+            return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function _addToBell(nombre, foto, mensaje, url) {
+            var badge = document.getElementById('notif-badge');
+            if (badge) {
+                var n = parseInt(badge.textContent.trim() || '0', 10);
+                badge.textContent = n + 1;
+                badge.classList.remove('d-none');
+            }
+            var list = document.getElementById('notif-list');
+            if (!list) return;
+            var empty = list.querySelector('p.text-grey-500');
+            if (empty) empty.remove();
+            var fotoSrc = foto || "{% static 'sociala/images/profile-4.png' %}";
+            var msgCorto = mensaje.length > 50 ? mensaje.substring(0, 50) + '…' : mensaje;
+            var card = document.createElement('a');
+            card.href = url || '#';
+            card.className = 'card w-100 border-0 ps-5 mb-3 text-decoration-none position-relative bg-lightblue';
+            card.style.cssText = 'padding-top:6px;padding-bottom:6px;';
+            card.innerHTML = '<img src="' + fotoSrc + '" alt="user" class="w40 position-absolute left-0" style="border-radius:50%;object-fit:cover;" onerror="this.src=\'{% static "sociala/images/profile-4.png" %}\';">'
+                + '<h5 class="font-xsss text-grey-900 mb-1 mt-0 fw-700 d-block">'
+                + _escapeHtml(nombre)
+                + ' <span class="text-grey-400 font-xsssss fw-600 float-right mt-1">ahora</span></h5>'
+                + '<h6 class="text-grey-500 fw-500 font-xssss lh-4">' + _escapeHtml(msgCorto) + '</h6>';
+            list.insertBefore(card, list.firstChild);
+        }
+
+        // Marcar notificaciones leídas al abrir campana
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('#dropdownMenu3')) return;
+            fetch("{% url 'marcar_notificaciones_leidas' %}", {
+                method: 'POST', headers: {
+                    'X-CSRFToken': _csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).then(function () {
+                var badge = document.getElementById('notif-badge');
+                if (badge) badge.classList.add('d-none');
+                document.querySelectorAll('#notif-list a.bg-lightblue').forEach(function (el) {
+                    el.classList.remove('bg-lightblue');
+                    el.classList.add('bg-transparent-card');
+                });
+            }).catch(function () {});
+        });
+
+        // ── Presencia online ────────────────────────────────────────────────
+        function _updateOnlineCount() {
+            var items = document.querySelectorAll('#sidebar-contacts .sidebar-contact-item');
+            var count = 0;
+            items.forEach(function(li) { if (li.getAttribute('data-online') === '1') count++; });
+            var lbl = document.getElementById('online-count');
+            if (lbl) lbl.textContent = count;
+        }
+
+        window.addEventListener('ws_global', function (e) {
+            var data = e.detail;
+            if (data.event === 'like_update') {
+                var tipo = data.tipo;
+                var id = data.obj_id;
+                var total = data.total;
+                var selector = '';
+
+                if (tipo === 'publicacion') selector = '.like-count-pub-' + id;
+                else if (tipo === 'album') selector = '.like-count-album-' + id;
+                else if (tipo === 'cancion') selector = '.like-count-cancion-' + id;
+
+                if (selector) {
+                    document.querySelectorAll(selector).forEach(function (el) {
+                        el.textContent = total;
+                    });
+                }
+                return;
+            }
+
+            if (data.event !== 'user_presence') return;
+
+            // Actualizar dot del sidebar
+            var dot = document.getElementById('online-dot-' + data.user_id);
+            var item = document.getElementById('sidebar-item-' + data.user_id);
+            if (dot) {
+                dot.style.background = data.online ? '#4cd964' : '#adb5bd';
+                dot.title = data.online ? 'En línea' : 'Desconectado';
+                if (data.online) {
+                    dot.classList.add('online-pulse');
+                } else {
+                    dot.classList.remove('online-pulse');
+                }
+            }
+            // Actualizar texto de estado y opacidad del item
+            if (item) {
+                item.setAttribute('data-online', data.online ? '1' : '0');
+                var stxt = item.querySelector('.sidebar-status-text-' + data.user_id);
+                if (stxt) {
+                    stxt.textContent = data.online ? 'En línea' : 'Desconectado';
+                    stxt.style.color = data.online ? '#4cd964' : '#adb5bd';
+                }
+                // Mover al principio si se conectó, al final si se desconectó
+                var ul = document.getElementById('sidebar-contacts');
+                if (ul && item) {
+                    if (data.online) {
+                        ul.insertBefore(item, ul.firstChild);
+                    } else {
+                        ul.appendChild(item);
+                    }
+                }
+            }
+            _updateOnlineCount();
+
+            // Actualizar estado en el popup de chat abierto
+            if (_chatOtroUsername && data.username === _chatOtroUsername) {
+                var sdot = document.getElementById('chat-popup-status-dot');
+                var stxtChat = document.getElementById('chat-popup-status');
+                if (sdot) { sdot.className = 'd-inline-block btn-round-xss m-0 bg-' + (data.online ? 'success' : 'secondary'); }
+                if (stxtChat) stxtChat.textContent = data.online ? 'En línea' : 'Desconectado';
+            }
+        });
+
+        // ── Chat popup ─────────────────────────────────────────────────────────
+        var _chatWS        = null;
+        var _chatOtroUsername = null;
+        var _miUsername    = '{{ user.username }}';
+        var _typingTimer   = null;
+        var _typing        = false;
+
+        function _renderMsgContent(data) {
+            var tipo = data.tipo || 'texto';
+            var msg = _escapeHtml(data.mensaje || '');
+            var url = _escapeHtml(data.archivo_url || '');
+            var nombre = _escapeHtml(data.archivo_nombre || 'Adjunto');
+
+            if (tipo === 'imagen' && url) {
+                return '<img src="' + url + '" alt="imagen" style="max-width:220px;border-radius:10px;">'
+                    + (msg ? '<div class="mt-1">' + msg + '</div>' : '');
+            }
+            if (tipo === 'video' && url) {
+                return '<video controls style="max-width:240px;border-radius:10px;"><source src="' + url + '"></video>'
+                    + (msg ? '<div class="mt-1">' + msg + '</div>' : '');
+            }
+            if (tipo === 'audio' && url) {
+                return '<audio controls style="max-width:240px;"><source src="' + url + '"></audio>'
+                    + (msg ? '<div class="mt-1">' + msg + '</div>' : '');
+            }
+            if (tipo === 'archivo' && url) {
+                return '<a href="' + url + '" target="_blank" class="text-decoration-underline">' + nombre + '</a>'
+                    + (msg ? '<div class="mt-1">' + msg + '</div>' : '');
+            }
+            return msg;
+        }
+
+        function _appendMsg(data, soy_yo, hora) {
+            var body = document.getElementById('chat-popup-body');
+            if (!body) return;
+            var placeholder = body.querySelector('p');
+            if (placeholder) placeholder.remove();
+            var div = document.createElement('div');
+            div.className = soy_yo ? 'message self text-right mt-2' : 'message mt-2';
+            div.innerHTML = '<div class="message-content font-xssss lh-24 fw-500">' + _renderMsgContent(data) + '</div>'
+                + '<span class="text-grey-400 font-xsssss d-block ' + (soy_yo ? 'text-right' : '') + '">' + _escapeHtml(hora) + '</span>';
+            body.appendChild(div);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function _showTyping(visible) {
+            var el = document.getElementById('chat-popup-typing-text');
+            if (el) el.style.display = visible ? 'inline' : 'none';
+        }
+
+        function _incPopupBadge() {
+            var cnt = document.getElementById('chat-popup-new-count');
+            if (!cnt) return;
+            var n = parseInt(cnt.textContent || '0', 10);
+            cnt.textContent = n + 1;
+            cnt.style.display = 'inline-flex';
+        }
+
+        function _setMinimized(minimized) {
+            var popup    = document.getElementById('chat-popup');
+            var bodyWrap = document.getElementById('chat-popup-body-wrap');
+            if (!popup || !bodyWrap) return;
+            if (minimized) {
+                popup.classList.add('cp-minimized');
+                bodyWrap.style.display = 'none';
+            } else {
+                popup.classList.remove('cp-minimized');
+                bodyWrap.style.display = 'block';
+                var cnt = document.getElementById('chat-popup-new-count');
+                if (cnt) { cnt.textContent = '0'; cnt.style.display = 'none'; }
+                var body = document.getElementById('chat-popup-body');
+                if (body) body.scrollTop = body.scrollHeight;
+            }
+        }
+
+        function _sendTyping(isTyping) {
+            if (!_chatWS || _chatWS.readyState !== 1) return;
+            if (_typing === isTyping) return;
+            _typing = isTyping;
+            _chatWS.send(JSON.stringify({ event: 'typing', escribiendo: isTyping }));
+        }
+
+        function _conectarChatWS(username) {
+            if (_chatWS) { try { _sendTyping(false); _chatWS.close(); } catch(ex){} }
+            _typing = false;
+            var proto = location.protocol === 'https:' ? 'wss' : 'ws';
+            _chatWS = new WebSocket(proto + '://' + location.host + '/ws/chat/' + username + '/');
+            _chatWS.onmessage = function (e) {
+                var data = JSON.parse(e.data);
+                if (data.event === 'mensaje') {
+                    var soy_yo = data.emisor === _miUsername;
+                    _showTyping(false);
+                    _appendMsg(data, soy_yo, data.enviado);
+                    if (!soy_yo) {
+                        _playSound();
+                        var popup = document.getElementById('chat-popup');
+                        if (popup && popup.classList.contains('cp-minimized')) _incPopupBadge();
+                    }
+                } else if (data.event === 'typing' && data.emisor !== _miUsername) {
+                    _showTyping(data.escribiendo);
+                }
+            };
+            _chatWS.onclose = function () { _typing = false; };
+        }
+
+        function _abrirChatPopup(username, nombre, foto) {
+            _chatOtroUsername = username;
+            var popup = document.getElementById('chat-popup');
+            if (!popup) return;
+            popup.style.display = 'block';
+            _setMinimized(false);
+            document.getElementById('chat-popup-nombre').textContent = nombre || username;
+            var imgEl  = document.getElementById('chat-popup-foto');
+            var initEl = document.getElementById('chat-popup-initials');
+            if (foto) {
+                imgEl.src = foto; imgEl.style.display = 'inline-block';
+                initEl.style.display = 'none';
+            } else {
+                imgEl.style.display = 'none';
+                initEl.style.display = 'inline-flex';
+                initEl.textContent = (nombre || username).slice(0, 2).toUpperCase();
+            }
+            var body = document.getElementById('chat-popup-body');
+            body.innerHTML = '<p class="text-grey-500 font-xssss text-center" style="margin:auto;">Cargando...</p>';
+            fetch('/chat/historial/' + username + '/', { headers: { 'X-CSRFToken': _csrfToken } })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    body.innerHTML = '';
+                    if (!data.mensajes || data.mensajes.length === 0) {
+                        body.innerHTML = '<p class="text-grey-500 font-xssss text-center" style="margin:auto;">Inicia la conversación 👋</p>';
+                    } else {
+                        data.mensajes.forEach(function (m) { _appendMsg(m, m.soy_yo, m.enviado); });
+                    }
+                    body.scrollTop = body.scrollHeight;
+                })
+                .catch(function () {
+                    body.innerHTML = '<p class="text-danger font-xssss text-center" style="margin:auto;">Error al cargar</p>';
+                });
+            _conectarChatWS(username);
+        }
+
+        function _cerrarChatPopup() {
+            var popup = document.getElementById('chat-popup');
+            if (popup) popup.style.display = 'none';
+            if (_chatWS) { try { _sendTyping(false); _chatWS.close(); } catch(ex){} _chatWS = null; }
+            _chatOtroUsername = null;
+            _typing = false;
+        }
+
+        // Exponer globalmente para que los onclick del HTML los alcancen
+        window._chatCerrar = _cerrarChatPopup;
+        window._chatToggleMinimize = function () {
+            var popup = document.getElementById('chat-popup');
+            if (popup) _setMinimized(!popup.classList.contains('cp-minimized'));
+        };
+
+        function _enviarMensaje() {
+            var input = document.getElementById('chat-popup-input');
+            if (!input) return;
+            var msg = input.value.trim();
+            if (!msg || !_chatWS || _chatWS.readyState !== 1) return;
+            clearTimeout(_typingTimer);
+            _sendTyping(false);
+            _chatWS.send(JSON.stringify({ mensaje: msg }));
+            input.value = '';
+        }
+
+        function _enviarAdjuntoPopup(file) {
+            if (!file || !_chatOtroUsername) return;
+            var input = document.getElementById('chat-popup-input');
+            var uploadWrap = document.getElementById('chat-popup-upload-status');
+            var uploadText = document.getElementById('chat-popup-upload-text');
+            var uploadBar = document.getElementById('chat-popup-upload-bar');
+            var attachIcon = document.getElementById('chat-popup-attach');
+            var sendIcon = document.getElementById('chat-popup-send');
+            var fd = new FormData();
+            fd.append('archivo', file);
+            if (input && input.value.trim()) fd.append('mensaje', input.value.trim());
+
+            if (attachIcon) attachIcon.style.pointerEvents = 'none';
+            if (sendIcon) sendIcon.style.pointerEvents = 'none';
+            if (uploadWrap) uploadWrap.style.display = 'block';
+            if (uploadText) uploadText.textContent = 'Subiendo archivo... 0%';
+            if (uploadBar) uploadBar.style.width = '0%';
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/chat/enviar-adjunto/' + encodeURIComponent(_chatOtroUsername) + '/');
+            xhr.setRequestHeader('X-CSRFToken', _csrfToken);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+            xhr.upload.onprogress = function (evt) {
+                if (!evt.lengthComputable) return;
+                var pct = Math.round((evt.loaded / evt.total) * 100);
+                if (uploadBar) uploadBar.style.width = pct + '%';
+                if (uploadText) uploadText.textContent = 'Subiendo archivo... ' + pct + '%';
+            };
+
+            xhr.onload = function () {
+                if (attachIcon) attachIcon.style.pointerEvents = 'auto';
+                if (sendIcon) sendIcon.style.pointerEvents = 'auto';
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    if (uploadBar) uploadBar.style.width = '100%';
+                    if (uploadText) uploadText.textContent = 'Archivo enviado';
+                    setTimeout(function () {
+                        if (uploadWrap) uploadWrap.style.display = 'none';
+                        if (uploadBar) uploadBar.style.width = '0%';
+                    }, 900);
+                    if (input) input.value = '';
+                    var f = document.getElementById('chat-popup-file');
+                    if (f) f.value = '';
+                } else {
+                    if (uploadText) uploadText.textContent = 'Error al subir archivo';
+                }
+            };
+
+            xhr.onerror = function () {
+                if (attachIcon) attachIcon.style.pointerEvents = 'auto';
+                if (sendIcon) sendIcon.style.pointerEvents = 'auto';
+                if (uploadText) uploadText.textContent = 'Error de conexión al subir';
+            };
+
+            xhr.send(fd);
+        }
+
+        // Detectar escritura en el input
+        document.addEventListener('input', function (e) {
+            if (!e.target || e.target.id !== 'chat-popup-input') return;
+            _sendTyping(true);
+            clearTimeout(_typingTimer);
+            _typingTimer = setTimeout(function () { _sendTyping(false); }, 2000);
+        });
+
+        document.addEventListener('change', function (e) {
+            if (!e.target || e.target.id !== 'chat-popup-file') return;
+            if (e.target.files && e.target.files[0]) _enviarAdjuntoPopup(e.target.files[0]);
+        });
+
+        // Delegación de eventos
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('.open-chat-btn');
+            if (btn) { e.preventDefault(); _abrirChatPopup(btn.dataset.username, btn.dataset.nombre, btn.dataset.foto || ''); return; }
+            if (e.target.closest('#chat-popup-attach')) {
+                e.preventDefault();
+                var fi = document.getElementById('chat-popup-file');
+                if (fi) fi.click();
+                return;
+            }
+            if (e.target.closest('#chat-popup-close'))    { e.preventDefault(); _cerrarChatPopup(); return; }
+            if (e.target.closest('#chat-popup-minimize')) {
+                e.preventDefault();
+                var popup = document.getElementById('chat-popup');
+                if (popup) _setMinimized(!popup.classList.contains('cp-minimized'));
+                return;
+            }
+            // clic en la cabecera también minimiza/restaura (excepto en los botones)
+            var hdr = e.target.closest('#chat-popup-header-row');
+            if (hdr && !e.target.closest('#chat-popup-close') && !e.target.closest('#chat-popup-minimize')) {
+                var popup2 = document.getElementById('chat-popup');
+                if (popup2) _setMinimized(!popup2.classList.contains('cp-minimized'));
+            }
+            if (e.target.closest('#chat-popup-send')) { e.preventDefault(); _enviarMensaje(); return; }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && document.activeElement && document.activeElement.id === 'chat-popup-input') {
+                e.preventDefault(); _enviarMensaje();
+            }
+        });
+
+        // ── Dropdown de chat: limpiar badge al abrir ───────────────────────
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('#dropdownChat')) return;
+            var badge = document.getElementById('msg-badge');
+            if (badge) { badge.textContent = ''; badge.classList.add('d-none'); }
+        });
+
+        // ── "Nuevo chat" → mostrar buscador ───────────────────────────────
+        var _ddBuscarVisible = false;
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('#chat-dd-nuevo');
+            if (!btn) return;
+            e.preventDefault(); e.stopPropagation();
+            _ddBuscarVisible = !_ddBuscarVisible;
+            var buscar = document.getElementById('chat-dd-buscar');
+            if (buscar) buscar.style.display = _ddBuscarVisible ? 'block' : 'none';
+            if (_ddBuscarVisible) { var inp = document.getElementById('chat-dd-search-input'); if (inp) inp.focus(); }
+        });
+
+        // Buscar usuario al escribir en el buscador del dropdown de chat
+        document.addEventListener('input', function (e) {
+            if (!e.target || e.target.id !== 'chat-dd-search-input') return;
+            var q = e.target.value.trim();
+            var res = document.getElementById('chat-dd-search-results');
+            if (!res) return;
+            if (q.length < 2) { res.innerHTML = ''; return; }
+            fetch('/usuarios/buscar/?q=' + encodeURIComponent(q), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    res.innerHTML = '';
+                    if (!data.usuarios || data.usuarios.length === 0) {
+                        res.innerHTML = '<p class="text-grey-500 font-xssss mb-0">Sin resultados</p>';
+                        return;
+                    }
+                    data.usuarios.forEach(function (u) {
+                        var a = document.createElement('a');
+                        a.href = '#';
+                        a.className = 'card w-100 border-0 ps-5 mb-2 text-decoration-none position-relative bg-transparent-card open-chat-btn';
+                        a.style.cssText = 'padding-top:6px;padding-bottom:6px;';
+                        a.dataset.username = u.username;
+                        a.dataset.nombre   = u.nombre;
+                        a.dataset.foto     = u.foto || '';
+                        var fotoHtml = u.foto
+                            ? '<img src="' + _escapeHtml(u.foto) + '" class="w40 rounded-circle position-absolute left-0" style="object-fit:cover;top:6px;">'
+                            : '<span class="btn-round-md bg-primary-gradiant text-white fw-700 font-xssss position-absolute left-0 d-inline-flex align-items-center justify-content-center" style="width:40px;height:40px;border-radius:50%;top:6px;">' + _escapeHtml((u.nombre || u.username).slice(0,1).toUpperCase()) + '</span>';
+                        a.innerHTML = fotoHtml
+                            + '<h5 class="font-xsss text-grey-900 mb-0 mt-0 fw-700 d-block">' + _escapeHtml(u.nombre || u.username) + '</h5>'
+                            + '<h6 class="text-grey-500 fw-500 font-xssss lh-4 mb-0">@' + _escapeHtml(u.username) + '</h6>';
+                        res.appendChild(a);
+                    });
+                })
+                .catch(function () {});
+        });
+
+        // ── Botón "Chat" del lateral → toggle dropdown del navbar ─────────
+        document.addEventListener('click', function (e) {
+            var btn = e.target.closest('#nav-chat-btn');
+            if (!btn) return;
+            e.preventDefault();
+            var ddTrigger = document.getElementById('dropdownChat');
+            if (ddTrigger && window.bootstrap) {
+                var dd = bootstrap.Dropdown.getOrCreateInstance(ddTrigger);
+                dd.toggle();
+            } else if (ddTrigger) {
+                ddTrigger.click();
+            }
+        });
+
+        _conectarGlobal();
+    })();
+    </script>
+    {% endif %}
     {% block extra_js %}{% endblock %}
     <script src="{% static 'sociala/js/plugin.js' %}"></script>
 
@@ -884,7 +1527,81 @@
 
     <script src="{% static 'sociala/js/scripts.js' %}"></script>
 
-    
+    {% if user.is_authenticated %}
+    <script>
+    (function() {
+        var PREF_URL = "{% url 'guardar_preferencias' %}";
+
+        function getCookie(name) {
+            var value = '; ' + document.cookie;
+            var parts = value.split('; ' + name + '=');
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return '';
+        }
+
+        function getCSRFToken() {
+            var c = getCookie('csrftoken');
+            if (c) return c;
+            var fallback = "{{ csrf_token }}";
+            return (fallback && fallback !== 'NOTPROVIDED') ? fallback : '';
+        }
+
+        function guardarPref(data) {
+            fetch(PREF_URL, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken()},
+                body: JSON.stringify(data)
+            }).then(function(resp) {
+                if (!resp.ok) {
+                    console.warn('No se pudo guardar preferencia', data, resp.status);
+                }
+            }).catch(function(err) {
+                console.warn('Error guardando preferencia', data, err);
+            });
+        }
+
+        // Color tema
+        $(document).on('change', 'input[name="color-radio"]', function() {
+            if (this.checked) guardarPref({color_tema: this.value});
+        });
+
+        // Dark mode
+        $(document).on('change', '#darkmodeswitch', function() {
+            guardarPref({modo_oscuro: this.checked});
+        });
+
+        // Header background
+        $(document).on('change', '#headerbgswitch', function() {
+            var active = this.checked;
+            $('.navigation').toggleClass('menu-current-color', active);
+            $('.nav-header').toggleClass('menu-current-color', active);
+            guardarPref({fondo_header: active});
+        });
+
+        // Menu position
+        $(document).on('change', '#menuposswitch', function() {
+            guardarPref({menu_lateral: this.checked});
+        });
+
+        // Aplicar estado inicial guardado al cargar (desktop y móvil)
+        {% if user_prefs.fondo_header %}
+        $(function() {
+            $('.navigation').addClass('menu-current-color');
+            $('.nav-header').addClass('menu-current-color');
+        });
+        {% endif %}
+
+        // Aplicar estado inicial de menu-active si está guardado
+        {% if user_prefs.menu_lateral %}
+        $(function() {
+            $('.navigation,.main-content').addClass('menu-active');
+        });
+        {% endif %}
+    })();
+    </script>
+    {% endif %}
+
 
 </body>
 

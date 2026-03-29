@@ -1,272 +1,1381 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Historias - Sociala{% endblock %}
+{% block title %}Historias - VeriffAi{% endblock %}
 
 {% block content %}
+<style>
+.story-card { cursor:pointer; transition:transform .15s ease; }
+.story-card:hover { transform:translateY(-2px); }
+.story-media { height:320px; object-fit:cover; width:100%; }
+.story-video-fallback {
+    height: 320px;
+    width: 100%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+    background: linear-gradient(160deg, #1f2937 0%, #111827 100%);
+    color: rgba(255,255,255,.9);
+}
+.story-video-fallback i { font-size: 28px; }
+.story-ring {
+    width:56px; height:56px; border-radius:50%; padding:2px;
+    background:linear-gradient(135deg,#1e74fd,#34c759);
+    display:inline-flex; align-items:center; justify-content:center;
+}
+.story-ring img { width:52px; height:52px; border-radius:50%; object-fit:cover; border:2px solid #fff; }
+.story-viewer-media { width:100%; max-height:70vh; object-fit:contain; background:#000; }
+.story-comments { max-height:none; overflow:auto; }
+.story-comment-item { border-bottom:1px solid #f0f2f5; padding:6px 0; }
+.story-progress {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    right: 12px;
+    z-index: 5;
+    display: flex;
+    gap: 6px;
+}
+.story-progress-track {
+    flex: 1;
+    height: 4px;
+    border-radius: 3px;
+    background: rgba(255,255,255,.35);
+    overflow: hidden;
+}
+.story-progress-fill {
+    width: 0;
+    height: 100%;
+    background: #fff;
+    transition: width .08s linear;
+}
+.story-modal-dialog { max-width: 1280px; margin: .35rem auto; }
+#storyViewer.show,
+#storyViewer.story-force-open {
+    background: rgba(4, 8, 15, 0.74) !important;
+    backdrop-filter: blur(1px);
+}
+#storyViewer .modal-dialog {
+    width: min(1280px, calc(100vw - .75rem));
+    margin: .35rem auto;
+}
+#storyViewer.story-force-open {
+    display: block !important;
+    opacity: 1 !important;
+}
+#storyViewer.story-force-open .modal-dialog {
+    transform: none !important;
+}
+#storyViewer .modal-content {
+    border-radius: 16px;
+    overflow: hidden;
+    height: clamp(620px, 86vh, 860px);
+    max-height: calc(100vh - .75rem);
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    box-shadow: 0 20px 60px rgba(0,0,0,.35);
+}
+.story-viewer-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+}
+.story-viewer-left {
+    background: #0d1117;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+.story-viewer-canvas {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#storyViewerContent {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.story-viewer-right {
+    background: #fff;
+    border-left: 1px solid #e9edf3;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+.story-viewer-right-head {
+    padding: 14px 14px 10px;
+    border-bottom: 1px solid #eef1f5;
+}
+.story-viewer-right-body {
+    padding: 10px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+}
+.story-viewers-box {
+    border: 1px solid #eef1f5;
+    border-radius: 10px;
+    padding: 8px 10px;
+    max-height: 130px;
+    overflow: auto;
+}
+.story-viewer-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+}
+.story-viewer-user img {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.story-nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.story-comments {
+    border: 1px solid #eef1f5;
+    border-radius: 10px;
+    padding: 8px 10px;
+    min-height: 150px;
+    flex: 1;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+#storyCommentForm {
+    flex: 0 0 auto;
+}
+#storyCommentInput {
+    min-width: 0;
+}
+.story-comment-item {
+    word-break: break-word;
+}
+.story-comment-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 0;
+}
+.story-comment-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex: 0 0 28px;
+    border: 1px solid #e7ebf1;
+}
+.story-comment-body {
+    min-width: 0;
+    flex: 1;
+}
+.story-comment-meta {
+    margin-top: 2px;
+}
+.story-comment-link {
+    text-decoration: none;
+}
+.story-comment-link:hover {
+    text-decoration: none;
+}
+.story-viewer-stage {
+    width: min(620px, 100%);
+    aspect-ratio: 9 / 16;
+    max-height: min(78vh, 840px);
+    margin: 0 auto;
+    background: #0b0b0b;
+    position: relative;
+}
+.story-viewer-stage .story-viewer-media {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    object-fit: contain;
+    display: block;
+}
+.story-viewer-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.65));
+    color: #fff;
+    padding: 10px 12px;
+    font-size: 12px;
+}
+.story-viewer-fallback {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: #fff;
+    font-size: 12px;
+    gap: 8px;
+    padding: 12px;
+    text-align: center;
+}
+.story-debug-toast {
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    z-index: 12000;
+    background: rgba(17, 24, 39, .95);
+    color: #fff;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.35;
+    max-width: 320px;
+    display: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25);
+}
+.story-debug-toast.error {
+    background: rgba(153, 27, 27, .96);
+}
+.modal-backdrop.story-backdrop {
+    z-index: 20000 !important;
+    opacity: .35 !important;
+}
+@media (max-width: 991.98px) {
+    .story-media { height:260px; }
+    body.modal-open .app-footer { display: none !important; }
+
+    #storyViewer {
+        padding: 0 !important;
+    }
+    #storyViewer .modal-dialog {
+        width: 100vw;
+        max-width: 100vw;
+        margin: 0;
+        min-height: 100dvh;
+        display: flex;
+        align-items: stretch;
+    }
+    #storyViewer .modal-content {
+        width: 100%;
+        border-radius: 0;
+        height: 100dvh;
+        max-height: 100dvh;
+        min-height: 100dvh;
+    }
+    .story-viewer-layout {
+        display: flex;
+        flex-direction: column;
+        grid-template-columns: 1fr;
+        min-height: 100dvh;
+        max-height: 100dvh;
+    }
+    .story-viewer-left {
+        padding: 6px;
+        flex: 0 0 auto;
+    }
+    .story-viewer-right {
+        border-left: 0;
+        border-top: 1px solid #e9edf3;
+        max-height: none;
+        min-height: 0;
+        flex: 1 1 auto;
+    }
+    .story-viewer-right-head {
+        padding: 10px 12px 8px;
+        flex: 0 0 auto;
+    }
+    .story-viewer-right-body {
+        padding: 8px 12px 10px;
+        min-height: 0;
+        overflow: hidden;
+        flex: 1 1 auto;
+    }
+    .story-comments {
+        min-height: 120px;
+        max-height: none;
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    #storyCommentForm {
+        flex: 0 0 auto;
+        position: sticky;
+        bottom: 0;
+        background: #fff;
+        padding-top: 8px;
+    }
+    .story-viewer-stage {
+        width: 100%;
+        max-height: min(46vh, 52dvh);
+    }
+}
+</style>
+
 <div class="row">
-
-                        <div class="col-xl-12">
-
-                            <div class="card shadow-xss w-100 d-block d-flex border-0 p-4 mb-3">
-
-                                <div class="card-body d-flex align-items-center p-0">
-
-                                    <h2 class="fw-700 mb-0 mt-0 font-md text-grey-900">Historias</h2>
-
-                                    <div class="search-form-2 ms-auto">
-
-                                        <i class="ti-search font-xss"></i>
-
-                                        <input type="text" class="form-control text-grey-500 mb-0 bg-greylight theme-dark-bg border-0" placeholder="Buscar...">
-
-                                    </div>
-
-                                    <a href="#" class="btn-round-md ms-2 bg-greylight theme-dark-bg rounded-3"><i class="feather-filter font-xss text-grey-500"></i></a>
-
-                                </div>
-
-                            </div>
-
-
-
-                            <div class="row ps-2 pe-1">
-
-                                 <div class="col-md-3 col-xss-6 pe-2 ps-2">
-
-                                     <div class="card h300 d-block border-0 shadow-xss rounded-3 bg-gradiant-bottom overflow-hidden mb-3 bg-image-cover" style="background-image: url(images/s-1.jpg);">
-
-                                        <div class="card-body d-block w-100 position-absolute bottom-0 text-center">
-
-                                            <figure class="avatar ms-auto me-auto mb-0 position-relative w50 z-index-1"><img src="{% static 'sociala/images/user-7.png' %}" alt="image" class="float-right p-0 bg-white rounded-circle w-100 shadow-xss"></figure>
-
-                                            <div class="clearfix"></div>
-
-                                            <h4 class="fw-600 position-relative z-index-1 ls-3 font-xssss text-white mt-2 mb-1">Victor Exrixon</h4>
-
-                                        </div>
-
-                                    </div>
-
-                                 </div>
-
-                                 <div class="col-md-3 col-xss-6 pe-2 ps-2">
-
-                                     <div class="card h300 d-block border-0 shadow-xss rounded-3 bg-gradiant-bottom overflow-hidden mb-3 bg-image-cover" style="background-image: url(images/s-2.jpg);">
-
-                                        <div class="card-body d-block w-100 position-absolute bottom-0 text-center">
-
-                                            <figure class="avatar ms-auto me-auto mb-0 position-relative w50 z-index-1"><img src="{% static 'sociala/images/user-12.png' %}" alt="image" class="float-right p-0 bg-white rounded-circle w-100 shadow-xss"></figure>
-
-                                            <div class="clearfix"></div>
-
-                                            <h4 class="fw-600 position-relative z-index-1 ls-3 font-xssss text-white mt-2 mb-1">Surfiya Zakir</h4>
-
-                                        </div>
-
-                                    </div>
-
-                                 </div>
-
-                                 <div class="col-md-3 col-xss-6 pe-2 ps-2">
-
-                                     <div class="card h300 d-block border-0 shadow-xss rounded-3 bg-gradiant-bottom overflow-hidden mb-3">
-
-                                        <video  autoplay loop class="float-right w-100">
-
-                                            <source src="{% static 'sociala/images/s-4.mp4' %}" type="video/mp4">
-
-                                        </video>
-
-                                        <div class="card-body d-block w-100 position-absolute bottom-0 text-center">
-
-                                            <figure class="avatar ms-auto me-auto mb-0 position-relative w50 z-index-1"><img src="{% static 'sociala/images/user-4.png' %}" alt="image" class="float-right p-0 bg-white rounded-circle w-100 shadow-xss"></figure>
-
-                                            <div class="clearfix"></div>
-
-                                            <h4 class="fw-600 position-relative z-index-1 ls-3 font-xssss text-white mt-2 mb-1">Goria Coast</h4>
-
-                                        </div>
-
-                                    </div>
-
-                                 </div>
-
-                                 <div class="col-md-3 col-xss-6 pe-2 ps-2">
-
-                                     <div class="card h300 d-block border-0 shadow-xss rounded-3 bg-gradiant-bottom overflow-hidden mb-3">
-
-                                        <video  autoplay loop class="float-right w-100">
-
-                                            <source src="{% static 'sociala/images/s-3.mp4' %}" type="video/mp4">
-
-                                        </video>
-
-                                        <div class="card-body d-block w-100 position-absolute bottom-0 text-center">
-
-                                            <figure class="avatar ms-auto me-auto mb-0 position-relative w50 z-index-1"><img src="{% static 'sociala/images/user-3.png' %}" alt="image" class="float-right p-0 bg-white rounded-circle w-100 shadow-xss"></figure>
-
-                                            <div class="clearfix"></div>
-
-                                            <h4 class="fw-600 position-relative z-index-1 ls-3 font-xssss text-white mt-2 mb-1">Hurin Seary</h4>
-
-                                        </div>
-
-                                    </div>
-
-                                 </div>
-
-
-
-                                 <div class="col-md-3 col-xss-6 pe-2 ps-2">
-
-                                     <div class="card h300 d-block border-0 shadow-xss rounded-3 bg-gradiant-bottom overflow-hidden mb-3 bg-image-cover" style="background-image: url(images/s-5.jpg);">
-
-                                        <div class="card-body d-block w-100 position-absolute bottom-0 text-center">
-
-                                            <figure class="avatar ms-auto me-auto mb-0 position-relative w50 z-index-1"><img src="{% static 'sociala/images/user-2.png' %}" alt="image" class="float-right p-0 bg-white rounded-circle w-100 shadow-xss"></figure>
-
-                                            <div class="clearfix"></div>
-
-                                            <h4 class="fw-600 position-relative z-index-1 ls-3 font-xssss text-white mt-2 mb-1">Victor Exrixon</h4>
-
-                                        </div>
-
-                                    </div>
-
-                                 </div>
-
-                                 <div class="col-md-3 col-xss-6 pe-2 ps-2">
-
-                                     <div class="card h300 d-block border-0 shadow-xss rounded-3 bg-gradiant-bottom overflow-hidden mb-3 bg-image-cover" style="background-image: url(images/s-6.jpg);">
-
-                                        <div class="card-body d-block w-100 position-absolute bottom-0 text-center">
-
-                                            <figure class="avatar ms-auto me-auto mb-0 position-relative w50 z-index-1"><img src="{% static 'sociala/images/user-8.png' %}" alt="image" class="float-right p-0 bg-white rounded-circle w-100 shadow-xss"></figure>
-
-                                            <div class="clearfix"></div>
-
-                                            <h4 class="fw-600 position-relative z-index-1 ls-3 font-xssss text-white mt-2 mb-1">Surfiya Zakir</h4>
-
-                                        </div>
-
-                                    </div>
-
-                                 </div>
-
-
-
-                                 <div class="col-md-3 col-xss-6 pe-2 ps-2">
-
-                                     <div class="card h300 d-block border-0 shadow-xss rounded-3 bg-gradiant-bottom overflow-hidden mb-3 bg-image-cover" style="background-image: url(images/s-7.jpg);">
-
-                                        <div class="card-body d-block w-100 position-absolute bottom-0 text-center">
-
-                                            <figure class="avatar ms-auto me-auto mb-0 position-relative w50 z-index-1"><img src="{% static 'sociala/images/user-4.png' %}" alt="image" class="float-right p-0 bg-white rounded-circle w-100 shadow-xss"></figure>
-
-                                            <div class="clearfix"></div>
-
-                                            <h4 class="fw-600 position-relative z-index-1 ls-3 font-xssss text-white mt-2 mb-1">Goria Coast</h4>
-
-                                        </div>
-
-                                    </div>
-
-                                 </div>
-
-                                 <div class="col-md-3 col-xss-6 pe-2 ps-2">
-
-                                     <div class="card h300 d-block border-0 shadow-xss rounded-3 bg-gradiant-bottom overflow-hidden mb-3 bg-image-cover" style="background-image: url(images/s-8.jpg);">
-
-                                        <div class="card-body d-block w-100 position-absolute bottom-0 text-center">
-
-                                            <figure class="avatar ms-auto me-auto mb-0 position-relative w50 z-index-1"><img src="{% static 'sociala/images/user-3.png' %}" alt="image" class="float-right p-0 bg-white rounded-circle w-100 shadow-xss"></figure>
-
-                                            <div class="clearfix"></div>
-
-                                            <h4 class="fw-600 position-relative z-index-1 ls-3 font-xssss text-white mt-2 mb-1">Hurin Seary</h4>
-
-                                        </div>
-
-                                    </div>
-
-                                 </div>
-
-                                 <div class="col-md-3 col-xss-6 pe-2 ps-2">
-
-                                     <div class="card h300 d-block border-0 shadow-xss rounded-3 bg-gradiant-bottom overflow-hidden mb-3 bg-image-cover" style="background-image: url(images/s-9.jpg);">
-
-                                        <div class="card-body d-block w-100 position-absolute bottom-0 text-center">
-
-                                            <figure class="avatar ms-auto me-auto mb-0 position-relative w50 z-index-1"><img src="{% static 'sociala/images/user-7.png' %}" alt="image" class="float-right p-0 bg-white rounded-circle w-100 shadow-xss"></figure>
-
-                                            <div class="clearfix"></div>
-
-                                            <h4 class="fw-600 position-relative z-index-1 ls-3 font-xssss text-white mt-2 mb-1">Victor Exrixon</h4>
-
-                                        </div>
-
-                                    </div>
-
-                                 </div>
-
-                                 <div class="col-md-3 col-xss-6 pe-2 ps-2">
-
-                                     <div class="card h300 d-block border-0 shadow-xss rounded-3 bg-gradiant-bottom overflow-hidden mb-3 bg-image-cover" style="background-image: url(images/s-10.jpg);">
-
-                                        <div class="card-body d-block w-100 position-absolute bottom-0 text-center">
-
-                                            <figure class="avatar ms-auto me-auto mb-0 position-relative w50 z-index-1"><img src="{% static 'sociala/images/user-12.png' %}" alt="image" class="float-right p-0 bg-white rounded-circle w-100 shadow-xss"></figure>
-
-                                            <div class="clearfix"></div>
-
-                                            <h4 class="fw-600 position-relative z-index-1 ls-3 font-xssss text-white mt-2 mb-1">Surfiya Zakir</h4>
-
-                                        </div>
-
-                                    </div>
-
-                                 </div>
-
-                                 <div class="col-md-3 col-xss-6 pe-2 ps-2">
-
-                                     <div class="card h300 d-block border-0 shadow-xss rounded-3 bg-gradiant-bottom overflow-hidden mb-3 bg-image-cover" style="background-image: url(images/s-11.jpg);">
-
-                                        <div class="card-body d-block w-100 position-absolute bottom-0 text-center">
-
-                                            <figure class="avatar ms-auto me-auto mb-0 position-relative w50 z-index-1"><img src="{% static 'sociala/images/user-4.png' %}" alt="image" class="float-right p-0 bg-white rounded-circle w-100 shadow-xss"></figure>
-
-                                            <div class="clearfix"></div>
-
-                                            <h4 class="fw-600 position-relative z-index-1 ls-3 font-xssss text-white mt-2 mb-1">Goria Coast</h4>
-
-                                        </div>
-
-                                    </div>
-
-                                 </div>
-
-                                 <div class="col-md-3 col-xss-6 pe-2 ps-2">
-
-                                     <div class="card h300 d-block border-0 shadow-xss rounded-3 bg-gradiant-bottom overflow-hidden mb-3 bg-image-cover" style="background-image: url(images/s-12.jpg);">
-
-                                        <div class="card-body d-block w-100 position-absolute bottom-0 text-center">
-
-                                            <figure class="avatar ms-auto me-auto mb-0 position-relative w50 z-index-1"><img src="{% static 'sociala/images/user-3.png' %}" alt="image" class="float-right p-0 bg-white rounded-circle w-100 shadow-xss"></figure>
-
-                                            <div class="clearfix"></div>
-
-                                            <h4 class="fw-600 position-relative z-index-1 ls-3 font-xssss text-white mt-2 mb-1">Hurin Seary</h4>
-
-                                        </div>
-
-                                    </div>
-
-                                 </div>
-
-                            </div>
-
-                        </div>               
-
+    <div class="col-xl-12">
+        <div class="card shadow-xss w-100 border-0 p-4 mb-3">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h2 class="fw-700 mb-0 mt-0 font-md text-grey-900">Historias</h2>
+                <span class="font-xssss text-grey-500">Expiran en 24 horas para todos, excepto para quien la creó</span>
+            </div>
+        </div>
+
+        <div class="card shadow-xss w-100 border-0 p-4 mb-3 bg-white theme-dark-bg text-center">
+            <button type="button" class="btn btn-primary fw-700 px-5" data-bs-toggle="modal" data-bs-target="#createStoryModal">
+                <i class="feather-plus me-2"></i> Crear historia
+            </button>
+        </div>
+
+        <!-- Modal para crear historia -->
+        <div class="modal fade" id="createStoryModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content border-0" style="border-radius:16px;overflow:hidden;">
+                    <div class="modal-header border-bottom">
+                        <h5 class="modal-title fw-700">Crear historia</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
+                    <div class="modal-body p-4">
+                        <form method="post" enctype="multipart/form-data" class="row g-3" id="story-create-form">
+                            {% csrf_token %}
+                            <div class="col-md-6">
+                                <label class="form-label font-xssss fw-600">Foto o video</label>
+                                {{ form_historia.archivo }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label font-xssss fw-600">Texto (opcional)</label>
+                                {{ form_historia.texto }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label font-xssss fw-600">Privacidad</label>
+                                {{ form_historia.privacidad }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label font-xssss fw-600">Ocultar a usuarios</label>
+                                <div class="user-selector" data-field="ocultar">
+                                    <input type="text" class="form-control style2-input ps-3 fw-500 font-xssss user-selector-input" placeholder="Buscar usuarios...">
+                                    <div class="user-selector-suggestions d-none position-absolute bg-white border rounded mt-1 w-100" style="z-index:1000; max-height:180px; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,.1);"></div>
+                                    <div class="user-selector-chips mt-2 d-flex flex-wrap gap-2"></div>
+                                </div>
+                                <textarea name="ocultar_usernames" class="form-control d-none" style="display:none!important;"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label font-xssss fw-600">Mejores amigos</label>
+                                <div class="user-selector" data-field="amigos_cercanos">
+                                    <input type="text" class="form-control style2-input ps-3 fw-500 font-xssss user-selector-input" placeholder="Buscar usuarios...">
+                                    <div class="user-selector-suggestions d-none position-absolute bg-white border rounded mt-1 w-100" style="z-index:1000; max-height:180px; overflow-y:auto; box-shadow:0 2px 8px rgba(0,0,0,.1);"></div>
+                                    <div class="user-selector-chips mt-2 d-flex flex-wrap gap-2"></div>
+                                </div>
+                                <textarea name="amigos_cercanos_usernames" class="form-control d-none" style="display:none!important;"></textarea>
+                            </div>
+                            <div class="col-md-12 d-grid">
+                                <button type="submit" class="btn btn-primary fw-700">Publicar historia</button>
+                            </div>
+                        </form>
+                        {% if form_historia.errors %}
+                            <div class="mt-3 text-danger font-xssss">{{ form_historia.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+<style>
+/* Modo oscuro (dark) */
+body.theme-dark #createStoryModal.show {
+    background: rgba(4, 8, 15, 0.74) !important;
+    backdrop-filter: blur(1px);
+}
+body.theme-dark #createStoryModal .modal-header {
+    background: #1a1a2e;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+}
+body.theme-dark #createStoryModal .modal-title {
+    color: #fff;
+}
+body.theme-dark #createStoryModal .btn-close {
+    filter: invert(1);
+}
+body.theme-dark #createStoryModal .modal-body {
+    background: #16213e;
+    color: #e0e0e0;
+}
+body.theme-dark #createStoryModal .modal-body .form-label {
+    color: #c0c0d0;
+}
+body.theme-dark #createStoryModal .modal-body .form-control,
+body.theme-dark #createStoryModal .modal-body select {
+    background: #0f3460;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+}
+body.theme-dark #createStoryModal .modal-body .form-control::placeholder {
+    color: #8888aa;
+}
+body.theme-dark #createStoryModal .modal-body .form-control:focus,
+body.theme-dark #createStoryModal .modal-body select:focus {
+    background: #0f3460;
+    border-color: rgba(255,255,255,0.35);
+    color: #fff;
+    box-shadow: none;
+}
+
+/* Modo claro (light) - default */ 
+#createStoryModal {
+    --modal-bg: #ffffff;
+    --modal-header-bg: #f8f9fa;
+    --modal-text: #333;
+    --form-bg: #f5f5f5;
+    --form-border: #ddd;
+}
+#createStoryModal.show {
+    background: rgba(0, 0, 0, 0.35) !important;
+    backdrop-filter: blur(1px);
+}
+#createStoryModal .modal-content {
+    background: var(--modal-bg);
+    border-color: #e0e0e0;
+}
+#createStoryModal .modal-header {
+    background: var(--modal-header-bg);
+    border-bottom-color: #e0e0e0;
+    color: var(--modal-text);
+}
+#createStoryModal .modal-title {
+    color: var(--modal-text);
+}
+#createStoryModal .modal-body {
+    background: var(--modal-bg);
+    color: var(--modal-text);
+}
+#createStoryModal .modal-body .form-label {
+    color: #555;
+    font-weight: 600;
+}
+#createStoryModal .modal-body .form-control,
+#createStoryModal .modal-body select {
+    background: var(--form-bg);
+    border-color: var(--form-border);
+    color: var(--modal-text);
+}
+#createStoryModal .modal-body .form-control::placeholder {
+    color: #999;
+}
+#createStoryModal .modal-body .form-control:focus,
+#createStoryModal .modal-body select:focus {
+    background: var(--form-bg);
+    border-color: #0084ff;
+    color: var(--modal-text);
+    box-shadow: 0 0 0 0.2rem rgba(0, 132, 255, 0.25);
+}
+
+.user-selector { position: relative; }
+.user-selector-input { position: relative; z-index: 1001; }
+.user-selector-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #0084ff;
+    color: #fff;
+    border-radius: 16px;
+    font-size: 12px;
+}
+.user-selector-chip-remove {
+    cursor: pointer;
+    font-weight: bold;
+    opacity: 0.8;
+}
+.user-selector-chip-remove:hover { opacity: 1; }
+.user-selector-suggestion {
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #f0f2f5;
+}
+.user-selector-suggestion:hover {
+    background: #f0f2f5;
+}
+.user-selector-suggestion img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.user-selector-suggestion-info {
+    flex: 1;
+    min-width: 0;
+}
+.user-selector-suggestion-name {
+    font-weight: 600;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.user-selector-suggestion-username {
+    font-size: 11px;
+    color: #65676b;
+}
+</style>
+
+        <div class="row ps-2 pe-1" id="stories-grid">
+            {% for bucket in historias_por_usuario %}
+            <div class="col-lg-3 col-md-4 col-sm-6 col-xss-12 pe-2 ps-2 mb-3 story-col" data-author="{{ bucket.usuario.id }}">
+                <div class="card border-0 shadow-xss rounded-3 overflow-hidden story-card"
+                     data-first-id="{{ bucket.ultima.id }}"
+                     data-author-id="{{ bucket.usuario.id }}"
+                     data-autor="{{ bucket.usuario.perfil.nombre_completo|escape }}"
+                     data-foto="{% if bucket.usuario.perfil.foto %}{{ bucket.usuario.perfil.foto.url }}{% elif bucket.usuario.socialaccount_set.all %}{{ bucket.usuario.socialaccount_set.all.0.get_avatar_url }}{% else %}{% static 'sociala/images/profile-4.png' %}{% endif %}">
+                    {% if bucket.ultima.tipo == 'imagen' %}
+                        <img src="{{ bucket.ultima.archivo.url }}" alt="historia" class="story-media">
+                    {% else %}
+                        <video class="story-media"
+                               muted
+                               playsinline
+                               preload="metadata"
+                               onloadeddata="try{this.currentTime=0.1;this.pause();}catch(e){}"
+                               onerror="this.style.display='none'; if(this.nextElementSibling){ this.nextElementSibling.style.display='flex'; }">
+                            <source src="{{ bucket.ultima.archivo.url }}">
+                        </video>
+                        <div class="story-video-fallback">
+                            <i class="feather-video"></i>
+                            <span class="font-xssss">Video</span>
+                        </div>
+                    {% endif %}
+                    <div class="p-3 d-flex align-items-center" style="background:rgba(0,0,0,.55);position:absolute;left:0;right:0;bottom:0;">
+                        <div class="story-ring me-2">
+                            <img src="{% if bucket.usuario.perfil.foto %}{{ bucket.usuario.perfil.foto.url }}{% elif bucket.usuario.socialaccount_set.all %}{{ bucket.usuario.socialaccount_set.all.0.get_avatar_url }}{% else %}{% static 'sociala/images/profile-4.png' %}{% endif %}" alt="{{ bucket.usuario.username }}">
+                        </div>
+                        <div class="text-white">
+                            <div class="fw-700 font-xssss">{{ bucket.usuario.perfil.nombre_completo }}</div>
+                            <div class="font-xsssss opacity-75">
+                                {{ bucket.historias|length }} historia{{ bucket.historias|length|pluralize }}
+                                {% if bucket.no_vistas %} • {{ bucket.no_vistas }} nueva{{ bucket.no_vistas|pluralize }}{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12" id="stories-empty">
+                <div class="card border-0 shadow-xss rounded-3 p-4 text-center">
+                    <h4 class="fw-700 font-sm mb-2">Todavía no hay historias</h4>
+                    <p class="font-xssss text-grey-500 mb-0">Publica tu primera historia para que tus seguidores la vean.</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="storyViewer" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered story-modal-dialog">
+        <div class="modal-content border-0 rounded-3 overflow-hidden story-viewer-shell">
+            <div class="story-viewer-layout">
+                <div class="story-viewer-left">
+                    <div class="story-viewer-canvas">
+                        <div id="storyViewerContent"></div>
+                    </div>
+                </div>
+                <div class="story-viewer-right">
+                    <div class="story-viewer-right-head d-flex align-items-start justify-content-between gap-2">
+                        <div>
+                            <h5 class="modal-title fw-700 mb-1" id="storyViewerTitle">Historia</h5>
+                            <span class="font-xssss text-grey-500" id="storyViewerMeta"></span>
+                        </div>
+                        <button type="button" class="story-close-btn border-0 bg-transparent font-lg lh-1 text-grey-900" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="story-viewer-right-body">
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-sm border-0 bg-transparent p-0 d-flex align-items-center" id="storyLikeBtn">
+                                <i class="feather-heart font-md text-grey-500 me-1" id="storyLikeIcon"></i>
+                                <span class="font-xssss" id="storyLikeText">Me gusta</span>
+                            </button>
+                            <span class="font-xssss text-grey-500" id="storyLikeCount">0</span>
+                            <span class="font-xssss text-grey-400">•</span>
+                            <span class="font-xssss text-grey-500" id="storyCommentCount">0 comentarios</span>
+                        </div>
+
+                        <div class="story-nav-row">
+                            <button type="button" class="btn btn-sm btn-light" id="storyPrev">Anterior</button>
+                            <button type="button" class="btn btn-sm btn-primary" id="storyNext">Siguiente</button>
+                        </div>
+
+                        <div id="storyViewersWrap" class="story-viewers-box d-none">
+                            <div class="font-xssss text-grey-600 mb-1">Vieron esta historia</div>
+                            <div id="storyViewersList"></div>
+                        </div>
+
+                        <div class="story-comments" id="storyComments"></div>
+
+                        <form id="storyCommentForm" class="d-flex gap-2">
+                            <input type="text" id="storyCommentInput" class="form-control" placeholder="Comenta esta historia...">
+                            <button class="btn btn-primary" type="submit">Enviar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="storyDebugToast" class="story-debug-toast"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var grid = document.getElementById('stories-grid');
+    var viewerEl = document.getElementById('storyViewer');
+    var viewerContent = document.getElementById('storyViewerContent');
+    var viewerTitle = document.getElementById('storyViewerTitle');
+    var viewerMeta = document.getElementById('storyViewerMeta');
+    var storyLikeBtn = document.getElementById('storyLikeBtn');
+    var storyLikeIcon = document.getElementById('storyLikeIcon');
+    var storyLikeCount = document.getElementById('storyLikeCount');
+    var storyCommentCount = document.getElementById('storyCommentCount');
+    var storyComments = document.getElementById('storyComments');
+    var storyCommentForm = document.getElementById('storyCommentForm');
+    var storyCommentInput = document.getElementById('storyCommentInput');
+    var storyViewersWrap = document.getElementById('storyViewersWrap');
+    var storyViewersList = document.getElementById('storyViewersList');
+    var prevBtn = document.getElementById('storyPrev');
+    var nextBtn = document.getElementById('storyNext');
+    var debugToast = document.getElementById('storyDebugToast');
+    var bsModal = null;
+    if (viewerEl && window.bootstrap && window.bootstrap.Modal) {
+        bsModal = new window.bootstrap.Modal(viewerEl, { backdrop: false, keyboard: true, focus: true });
+    }
+
+    var author = null;
+    var historias = [];
+    var idx = 0;
+    var progressRaf = null;
+    var progressStartedAt = 0;
+    var progressDuration = 6000;
+    var progressPaused = false;
+    var progressPauseStarted = 0;
+    var holdPointerActive = false;
+
+    function esc(t) {
+        return String(t || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function profileUrl(username) {
+        return '/usuario/' + encodeURIComponent(username || '') + '/';
+    }
+
+    function stopProgress() {
+        if (progressRaf) {
+            cancelAnimationFrame(progressRaf);
+            progressRaf = null;
+        }
+    }
+
+    function fillProgress(index, pct) {
+        var fills = viewerContent.querySelectorAll('.story-progress-fill');
+        fills.forEach(function (f, i) {
+            if (i < index) f.style.width = '100%';
+            else if (i > index) f.style.width = '0%';
+            else f.style.width = Math.max(0, Math.min(100, pct)) + '%';
+        });
+    }
+
+    function startImageProgress() {
+        stopProgress();
+        progressStartedAt = Date.now();
+        progressDuration = 6000;
+        progressPaused = false;
+
+        function tick() {
+            if (progressPaused) {
+                progressRaf = requestAnimationFrame(tick);
+                return;
+            }
+            var elapsed = Date.now() - progressStartedAt;
+            var pct = (elapsed / progressDuration) * 100;
+            fillProgress(idx, pct);
+            if (elapsed >= progressDuration) {
+                if (idx < historias.length - 1) {
+                    idx++;
+                    renderStory();
+                } else {
+                    hideStoryModal();
+                }
+                return;
+            }
+            progressRaf = requestAnimationFrame(tick);
+        }
+        progressRaf = requestAnimationFrame(tick);
+    }
+
+    function attachStageInteractions() {
+        var stage = viewerContent.querySelector('.story-viewer-stage');
+        if (!stage) return;
+
+        var rightPanel = document.querySelector('.story-viewer-right');
+        var navigationLocked = false;
+
+        function pauseProgress() {
+            if (progressPaused) return;
+            progressPaused = true;
+            progressPauseStarted = Date.now();
+            var vid = document.getElementById('storyMediaEl');
+            if (vid && vid.tagName === 'VIDEO' && !vid.paused) vid.pause();
+        }
+
+        function resumeProgress() {
+            if (!progressPaused) return;
+            progressPaused = false;
+            var pausedFor = Date.now() - progressPauseStarted;
+            progressStartedAt += pausedFor;
+            var vid = document.getElementById('storyMediaEl');
+            if (vid && vid.tagName === 'VIDEO' && vid.paused) {
+                vid.play().catch(function () {});
+            }
+        }
+
+        function isInRightPanel(e) {
+            return rightPanel && rightPanel.contains(e.target);
+        }
+
+        function isCommentFieldFocused() {
+            var inputField = document.getElementById('storyCommentInput');
+            return inputField && document.activeElement === inputField;
+        }
+
+        // Bloquear navegación cuando se escribe comentarios
+        var commentInput = document.getElementById('storyCommentInput');
+        if (commentInput) {
+            commentInput.addEventListener('focus', function() {
+                navigationLocked = true;
+                pauseProgress();
+            });
+            commentInput.addEventListener('blur', function() {
+                navigationLocked = false;
+                resumeProgress();
+            });
+        }
+
+        stage.addEventListener('pointerdown', function (e) {
+            // No pausar si estamos en la sección de comentarios o navegación está bloqueada
+            if (!isInRightPanel(e) && !navigationLocked) {
+                holdPointerActive = true;
+                pauseProgress();
+            }
+        });
+        stage.addEventListener('pointerup', function (e) {
+            // No navegar si navegación está bloqueada o estamos en área de comentarios
+            if (navigationLocked || isInRightPanel(e) || isCommentFieldFocused() || e.target.closest('input, textarea, button')) {
+                if (!navigationLocked) resumeProgress();
+                holdPointerActive = false;
+                return;
+            }
+
+            var rect = stage.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var w = rect.width || 1;
+            var tapZoneLeft = w * 0.35;
+            var tapZoneRight = w * 0.65;
+            resumeProgress();
+
+            if (x < tapZoneLeft) {
+                if (idx > 0) { idx--; renderStory(); }
+                holdPointerActive = false;
+                return;
+            }
+            if (x > tapZoneRight) {
+                if (idx < historias.length - 1) { idx++; renderStory(); }
+                else hideStoryModal();
+                holdPointerActive = false;
+                return;
+            }
+            holdPointerActive = false;
+        });
+        stage.addEventListener('pointerleave', function () {
+            if (holdPointerActive && !navigationLocked) {
+                holdPointerActive = false;
+                resumeProgress();
+            }
+        });
+
+        // Prevenir propagación de eventos en la sección derecha
+        if (rightPanel) {
+            rightPanel.addEventListener('pointerup', function(e) {
+                e.stopPropagation();
+            });
+            rightPanel.addEventListener('pointerdown', function(e) {
+                e.stopPropagation();
+            });
+        }
+
+        // Prevenir navegación por teclado si estamos escribiendo comentarios
+        document.addEventListener('keydown', function(e) {
+            if (isCommentFieldFocused() || navigationLocked) return; // Ignorar si está bloqueada la navegación
+            
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (idx > 0) { idx--; renderStory(); }
+            }
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                if (idx < historias.length - 1) { idx++; renderStory(); }
+                else hideStoryModal();
+            }
+        }, { capture: true });
+    }
+
+    function renderViewers(vistas, esAutor) {
+        if (!storyViewersWrap || !storyViewersList) return;
+        if (!esAutor) {
+            storyViewersWrap.classList.add('d-none');
+            storyViewersList.innerHTML = '';
+            return;
+        }
+        storyViewersWrap.classList.remove('d-none');
+        if (!vistas || !vistas.length) {
+            storyViewersList.innerHTML = '<div class="font-xssss text-grey-500">Aún nadie la ha visto</div>';
+            return;
+        }
+        storyViewersList.innerHTML = '';
+        vistas.forEach(function (v) {
+            var row = document.createElement('a');
+            row.className = 'story-viewer-user text-decoration-none';
+            row.href = profileUrl(v.username);
+            row.innerHTML = '<img src="' + (v.foto || '/static/sociala/images/profile-4.png') + '" alt="avatar" '
+                + 'onerror="this.src=\'/static/sociala/images/profile-4.png\'">'
+                + '<span class="font-xssss text-grey-800 fw-600">' + esc(v.nombre || v.username) + '</span>';
+            storyViewersList.appendChild(row);
+        });
+    }
+
+    function csrfToken() {
+        var m = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+        return m ? decodeURIComponent(m[1]) : '';
+    }
+
+    function debug(msg, isError) {
+        if (!debugToast) return;
+        debugToast.textContent = msg;
+        debugToast.classList.toggle('error', !!isError);
+        debugToast.style.display = 'block';
+        clearTimeout(debugToast._hideTimer);
+        debugToast._hideTimer = setTimeout(function () {
+            debugToast.style.display = 'none';
+        }, isError ? 6500 : 3000);
+    }
+
+    function modalEngineName() {
+        if (bsModal) return 'bootstrap5';
+        if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) return 'jquery-modal';
+        return 'fallback-manual';
+    }
+
+    function isModalVisible() {
+        if (!viewerEl) return false;
+        var style = window.getComputedStyle(viewerEl);
+        return viewerEl.classList.contains('show') || viewerEl.classList.contains('story-force-open') || style.display === 'block';
+    }
+
+    function normalizeBackdrops() {
+        var backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(function (b) {
+            b.classList.remove('story-backdrop');
+            b.remove();
+        });
+    }
+
+    function forceOpenModal() {
+        if (!viewerEl) return;
+        normalizeBackdrops();
+        viewerEl.classList.add('show');
+        viewerEl.classList.add('story-force-open');
+        viewerEl.style.display = 'block';
+        viewerEl.setAttribute('aria-modal', 'true');
+        viewerEl.removeAttribute('aria-hidden');
+        document.body.classList.add('modal-open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function forceCloseModal() {
+        if (!viewerEl) return;
+        viewerEl.classList.remove('story-force-open');
+        viewerEl.classList.remove('show');
+        viewerEl.style.display = 'none';
+        viewerEl.setAttribute('aria-hidden', 'true');
+        viewerEl.removeAttribute('aria-modal');
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        document.querySelectorAll('.modal-backdrop').forEach(function (b) { b.remove(); });
+    }
+
+    function showStoryModal() {
+        if (!viewerEl) return;
+        if (bsModal) {
+            bsModal.show();
+            setTimeout(function () {
+                if (!isModalVisible()) forceOpenModal();
+            }, 120);
+            return;
+        }
+        if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) {
+            window.jQuery(viewerEl).modal({ backdrop: false, show: true });
+            setTimeout(function () {
+                if (!isModalVisible()) forceOpenModal();
+            }, 120);
+            return;
+        }
+        // Fallback sin Bootstrap
+        forceOpenModal();
+    }
+
+    function hideStoryModal() {
+        stopProgress();
+        if (!viewerEl) return;
+        if (bsModal) {
+            bsModal.hide();
+            setTimeout(forceCloseModal, 40);
+            return;
+        }
+        if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) {
+            window.jQuery(viewerEl).modal('hide');
+            setTimeout(forceCloseModal, 40);
+            return;
+        }
+        forceCloseModal();
+    }
+
+    function historiaActual() {
+        return historias[idx] || null;
+    }
+
+    function renderComments(items) {
+        storyComments.innerHTML = '';
+        if (!items || !items.length) {
+            storyComments.innerHTML = '<div class="font-xssss text-grey-500 py-2">Sin comentarios aún</div>';
+            return;
+        }
+        items.forEach(function(c) {
+            var div = document.createElement('div');
+            div.className = 'story-comment-item font-xssss';
+            var avatar = c.autor_foto || '/static/sociala/images/profile-4.png';
+            var urlPerfil = profileUrl(c.autor_username);
+            div.innerHTML = '<a class="story-comment-link" href="' + urlPerfil + '">'
+                + '<img class="story-comment-avatar" src="' + avatar + '" alt="avatar" '
+                + 'onerror="this.src=\'/static/sociala/images/profile-4.png\'"></a>'
+                + '<div class="story-comment-body">'
+                + '<div><a class="story-comment-link fw-700 text-grey-900" href="' + urlPerfil + '">' + esc(c.autor_nombre || c.autor_username) + '</a>: '
+                + '<span class="text-grey-700">' + esc(c.contenido) + '</span></div>'
+                + '<div class="story-comment-meta text-grey-400 font-xsssss">' + esc(c.creado) + '</div>'
+                + '</div>';
+            storyComments.appendChild(div);
+        });
+        // Scroll al final
+        storyComments.scrollTop = storyComments.scrollHeight;
+    }
+
+    function scrollCommentsToBottom() {
+        if (storyComments) {
+            setTimeout(function() {
+                storyComments.scrollTop = storyComments.scrollHeight;
+            }, 50);
+        }
+    }
+
+    function renderStory() {
+        var h = historiaActual();
+        if (!h) return;
+        stopProgress();
+
+        viewerTitle.textContent = (author && author.nombre) ? author.nombre : 'Historia';
+        viewerMeta.textContent = (idx + 1) + ' / ' + historias.length + ' • ' + (h.hora || '');
+
+        var mediaUrl = h.archivo_url || '';
+        if (mediaUrl && mediaUrl.charAt(0) !== '/' && !/^https?:\/\//i.test(mediaUrl)) {
+            mediaUrl = '/' + mediaUrl;
+        }
+        if (!mediaUrl) {
+            viewerContent.innerHTML = '<div class="story-viewer-stage">'
+                + '<div id="storyMediaFallback" class="story-viewer-fallback" style="display:flex">'
+                + '<div>Esta historia no tiene archivo válido.</div>'
+                + '</div>'
+                + '</div>';
+            debug('Historia sin archivo_url válido', true);
+            return;
+        }
+        var lowerUrl = mediaUrl.toLowerCase();
+        var looksVideo = /\.(mp4|webm|ogg|mov|m4v)(\?|$)/.test(lowerUrl);
+        var looksImage = /\.(jpg|jpeg|png|gif|webp|bmp|avif)(\?|$)/.test(lowerUrl);
+        // Si la URL parece video, debe renderizarse como video aunque el tipo en DB esté mal.
+        var renderAsVideo = looksVideo || (h.tipo === 'video' && !looksImage);
+        
+        // Detectar MIME type del video
+        var videoMime = 'video/mp4';
+        if (lowerUrl.includes('.webm')) videoMime = 'video/webm';
+        else if (lowerUrl.includes('.ogg')) videoMime = 'video/ogg';
+        else if (lowerUrl.includes('.mov')) videoMime = 'video/quicktime';
+
+        debug('Render historia #' + h.id + ' tipo=' + h.tipo + ' media=' + (renderAsVideo ? 'video' : 'imagen') + ' url=' + mediaUrl);
+
+        if (renderAsVideo) {
+            viewerContent.innerHTML = '<div class="story-viewer-stage">'
+                + '<div class="story-progress" id="storyProgressTracks"></div>'
+                + '<video id="storyMediaEl" class="story-viewer-media" controls autoplay muted playsinline preload="auto" style="background:#000;"><source src="' + mediaUrl + '" type="' + videoMime + '"></video>'
+                + '<div id="storyMediaFallback" class="story-viewer-fallback" style="display:none;">'
+                + '<div>No se pudo reproducir este video.</div>'
+                + '<a href="' + mediaUrl + '" target="_blank" class="btn btn-sm btn-light">Abrir archivo</a>'
+                + '</div>'
+                + (h.texto ? '<div class="story-viewer-caption">' + esc(h.texto) + '</div>' : '')
+                + '</div>';
+            // Asignamos la URL y manejamos reproducción + errores
+            setTimeout(function() {
+                var vidEl = viewerContent.querySelector('#storyMediaEl');
+                var fallback = viewerContent.querySelector('#storyMediaFallback');
+                if (vidEl) {
+                    // Intentar reproducir
+                    var playPromise = vidEl.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(function(e) { 
+                            console.log('Video play error:', e);
+                        });
+                    }
+                    // Mostrar fallback si hay error
+                    vidEl.addEventListener('error', function() {
+                        if (fallback) fallback.style.display = 'flex';
+                    }, false);
+                }
+            }, 100);
+        } else {
+            viewerContent.innerHTML = '<div class="story-viewer-stage">'
+                + '<div class="story-progress" id="storyProgressTracks"></div>'
+                + '<img id="storyMediaEl" class="story-viewer-media" src="' + mediaUrl + '" alt="historia">'
+                + '<div id="storyMediaFallback" class="story-viewer-fallback">'
+                + '<div>No se pudo cargar esta imagen.</div>'
+                + '<a href="' + mediaUrl + '" target="_blank" class="btn btn-sm btn-light">Abrir archivo</a>'
+                + '</div>'
+                + (h.texto ? '<div class="story-viewer-caption">' + esc(h.texto) + '</div>' : '')
+                + '</div>';
+        }
+
+        var progressEl = document.getElementById('storyProgressTracks');
+        if (progressEl) {
+            progressEl.innerHTML = historias.map(function () {
+                return '<div class="story-progress-track"><div class="story-progress-fill"></div></div>';
+            }).join('');
+            fillProgress(idx, 0);
+        }
+
+        attachStageInteractions();
+
+        var mediaEl = document.getElementById('storyMediaEl');
+        var fallback = document.getElementById('storyMediaFallback');
+        if (mediaEl && fallback) {
+            mediaEl.addEventListener('error', function () {
+                fallback.style.display = 'flex';
+                debug('Error cargando media: ' + mediaUrl, true);
+            });
+            if (mediaEl.tagName === 'VIDEO') {
+                mediaEl.addEventListener('loadeddata', function () {
+                    fallback.style.display = 'none';
+                });
+                mediaEl.addEventListener('timeupdate', function () {
+                    if (!mediaEl.duration) return;
+                    fillProgress(idx, (mediaEl.currentTime / mediaEl.duration) * 100);
+                });
+                mediaEl.addEventListener('ended', function () {
+                    if (idx < historias.length - 1) { idx++; renderStory(); }
+                    else hideStoryModal();
+                });
+            } else {
+                mediaEl.addEventListener('load', function () {
+                    fallback.style.display = 'none';
+                });
+                startImageProgress();
+            }
+            setTimeout(function () {
+                var notReadyVideo = mediaEl.tagName === 'VIDEO' && mediaEl.readyState < 2;
+                var notReadyImage = mediaEl.tagName === 'IMG' && !mediaEl.complete;
+                if (notReadyVideo || notReadyImage) {
+                    fallback.style.display = 'flex';
+                }
+            }, 1800);
+        }
+
+        storyLikeIcon.classList.toggle('text-danger', !!h.liked);
+        storyLikeIcon.classList.toggle('text-grey-500', !h.liked);
+        storyLikeCount.textContent = h.likes_total || 0;
+        storyCommentCount.textContent = (h.comentarios_total || 0) + ' comentarios';
+        prevBtn.disabled = idx === 0;
+        nextBtn.disabled = idx >= historias.length - 1;
+
+        fetch('/historias/' + h.id + '/vista/', {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' }
+        }).catch(function(){});
+
+        fetch('/historias/' + h.id + '/detalle/', {
+            credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function(r){ return r.json(); })
+          .then(function(d){
+              if (!d.ok) return;
+              renderComments(d.comentarios || []);
+              renderViewers(d.vistas || [], !!d.autor_es_propietario);
+          })
+          .catch(function(){
+              renderComments([]);
+              renderViewers([], false);
+          });
+    }
+
+    function openStory(historiaId) {
+        debug('Abriendo historia #' + historiaId + ' con ' + modalEngineName());
+        fetch('/historias/' + historiaId + '/detalle/', {
+            credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            if (!d.ok) {
+                debug('No se pudo abrir historia: ' + (d.error || 'respuesta inválida'), true);
+                return;
+            }
+            author = d.autor;
+            historias = d.historias || [];
+            idx = Math.max(0, historias.findIndex(function(x){ return x.id === d.current_id; }));
+            renderStory();
+            showStoryModal();
+
+            // Fallback forzado si librería no abrió visualmente en tiempo
+            setTimeout(function () {
+                if (!isModalVisible()) {
+                    debug('Modal no visible, aplicando apertura forzada', true);
+                    forceOpenModal();
+                }
+            }, 300);
+        })
+        .catch(function(err){
+            debug('Error al cargar historia: ' + err, true);
+        });
+    }
+
+    if (!grid) return;
+
+    // Cierre manual compatible cuando no está bootstrap completamente operativo
+    viewerEl.addEventListener('click', function (e) {
+        if (e.target && (e.target.classList.contains('modal') || e.target.classList.contains('story-close-btn'))) {
+            hideStoryModal();
+        }
+    });
+
+    grid.addEventListener('click', function(e) {
+        var card = e.target.closest('.story-card');
+        if (!card) return;
+        openStory(card.getAttribute('data-first-id'));
+    });
+
+    prevBtn.addEventListener('click', function() {
+        if (idx > 0) { idx--; renderStory(); }
+    });
+
+    nextBtn.addEventListener('click', function() {
+        if (idx < historias.length - 1) { idx++; renderStory(); }
+    });
+
+    storyLikeBtn.addEventListener('click', function() {
+        var h = historiaActual();
+        if (!h) return;
+        fetch('/historias/' + h.id + '/like/', {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            if (!d.ok) return;
+            h.liked = d.liked;
+            h.likes_total = d.total;
+            renderStory();
+        });
+    });
+
+    storyCommentForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var h = historiaActual();
+        var txt = (storyCommentInput.value || '').trim();
+        if (!h || !txt) return;
+
+        var fd = new FormData();
+        fd.append('contenido', txt);
+        fetch('/historias/' + h.id + '/comentar/', {
+            method: 'POST', credentials: 'same-origin', body: fd,
+            headers: { 'X-CSRFToken': csrfToken(), 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function(r){ return r.json(); })
+          .then(function(d){
+              if (!d.ok) return;
+              storyCommentInput.value = '';
+              scrollCommentsToBottom();
+          });
+    });
+
+    // ── Inicializador de Selectores de Usuarios ────────────────────────────
+    document.querySelectorAll('.user-selector').forEach(function(selector) {
+        var input = selector.querySelector('.user-selector-input');
+        var suggestionsBox = selector.querySelector('.user-selector-suggestions');
+        var chipsBox = selector.querySelector('.user-selector-chips');
+        var hiddenField = selector.nextElementSibling;
+        var field = selector.getAttribute('data-field');
+        var selectedUsers = new Map();
+
+        function renderChips() {
+            chipsBox.innerHTML = '';
+            selectedUsers.forEach(function(user) {
+                var chip = document.createElement('div');
+                chip.className = 'user-selector-chip';
+                chip.innerHTML = '<span>' + user.nombre + '</span> <span class="user-selector-chip-remove">×</span>';
+                chip.querySelector('.user-selector-chip-remove').addEventListener('click', function() {
+                    selectedUsers.delete(user.username);
+                    renderChips();
+                    updateHiddenField();
+                });
+                chipsBox.appendChild(chip);
+            });
+        }
+
+        function updateHiddenField() {
+            var usernames = Array.from(selectedUsers.keys()).join(',');
+            hiddenField.value = usernames;
+        }
+
+        function showSuggestions(query) {
+            if (!query || query.length < 1) {
+                suggestionsBox.classList.add('d-none');
+                return;
+            }
+            fetch('/usuarios/buscar/?q=' + encodeURIComponent(query), {
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                suggestionsBox.innerHTML = '';
+                (d.usuarios || []).forEach(function(user) {
+                    if (selectedUsers.has(user.username)) return;
+                    var suggestion = document.createElement('div');
+                    suggestion.className = 'user-selector-suggestion';
+                    suggestion.innerHTML = '<img src="' + user.foto + '" onerror="this.src=\'/static/sociala/images/profile-4.png\'">'
+                        + '<div class="user-selector-suggestion-info">'
+                        + '<div class="user-selector-suggestion-name">' + user.nombre + '</div>'
+                        + '<div class="user-selector-suggestion-username">@' + user.username + '</div>'
+                        + '</div>';
+                    suggestion.addEventListener('click', function() {
+                        selectedUsers.set(user.username, user);
+                        input.value = '';
+                        suggestionsBox.classList.add('d-none');
+                        renderChips();
+                        updateHiddenField();
+                    });
+                    suggestionsBox.appendChild(suggestion);
+                });
+                if (d.usuarios && d.usuarios.length > 0) {
+                    suggestionsBox.classList.remove('d-none');
+                } else {
+                    suggestionsBox.classList.add('d-none');
+                }
+            });
+        }
+
+        input.addEventListener('input', function() {
+            clearTimeout(input._searchTimeout);
+            input._searchTimeout = setTimeout(function() {
+                showSuggestions(input.value.trim());
+            }, 300);
+        });
+
+        input.addEventListener('focus', function() {
+            if (input.value.trim()) {
+                showSuggestions(input.value.trim());
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!selector.contains(e.target)) {
+                suggestionsBox.classList.add('d-none');
+            }
+        });
+    });
+
+    window.addEventListener('ws_global', function(e) {
+        var d = e.detail || {};
+        if (d.event === 'historia_like_update') {
+            historias.forEach(function(h) {
+                if (h.id === d.historia_id) h.likes_total = d.total;
+            });
+            if (historiaActual() && historiaActual().id === d.historia_id) renderStory();
+        }
+        if (d.event === 'historia_comentario_nuevo') {
+            historias.forEach(function(h) {
+                if (h.id === d.historia_id) h.comentarios_total = (h.comentarios_total || 0) + 1;
+            });
+            if (historiaActual() && historiaActual().id === d.historia_id) {
+                var div = document.createElement('div');
+                div.className = 'story-comment-item font-xssss';
+                var avatar = d.autor_foto || '/static/sociala/images/profile-4.png';
+                var urlPerfil = profileUrl(d.autor_username);
+                div.innerHTML = '<a class="story-comment-link" href="' + urlPerfil + '">'
+                    + '<img class="story-comment-avatar" src="' + avatar + '" alt="avatar" '
+                    + 'onerror="this.src=\'/static/sociala/images/profile-4.png\'"></a>'
+                    + '<div class="story-comment-body">'
+                    + '<div><a class="story-comment-link fw-700 text-grey-900" href="' + urlPerfil + '">' + esc(d.autor_nombre || d.autor_username) + '</a>: '
+                    + '<span class="text-grey-700">' + esc(d.contenido) + '</span></div>'
+                    + '<div class="story-comment-meta text-grey-400 font-xsssss">' + esc(d.creado) + '</div>'
+                    + '</div>';
+                storyComments.appendChild(div);
+                storyCommentCount.textContent = (historiaActual().comentarios_total || 0) + ' comentarios';
+                scrollCommentsToBottom();
+            }
+        }
+        if (d.event === 'historia_nueva') {
+            var empty = document.getElementById('stories-empty');
+            if (empty) empty.remove();
+            if (document.querySelector('.story-card[data-first-id="' + d.historia_id + '"]')) return;
+            var col = document.createElement('div');
+            col.className = 'col-lg-3 col-md-4 col-sm-6 col-xss-12 pe-2 ps-2 mb-3 story-col';
+            col.innerHTML = '<div class="card border-0 shadow-xss rounded-3 overflow-hidden story-card" '
+                + 'data-first-id="' + d.historia_id + '" data-author-id="' + d.autor_id + '" '
+                + 'data-autor="' + (d.autor_nombre || d.autor_username) + '" data-foto="' + (d.autor_foto || '') + '">'
+                + (d.tipo === 'video'
+                    ? '<video class="story-media" muted playsinline preload="metadata"><source src="' + d.archivo_url + '"></video>'
+                    : '<img src="' + d.archivo_url + '" alt="historia" class="story-media">')
+                + '<div class="p-3 d-flex align-items-center" style="background:rgba(0,0,0,.55);position:absolute;left:0;right:0;bottom:0;">'
+                + '<div class="story-ring me-2"><img src="' + (d.autor_foto || '/static/sociala/images/profile-4.png') + '"></div>'
+                + '<div class="text-white"><div class="fw-700 font-xssss">' + (d.autor_nombre || d.autor_username) + '</div>'
+                + '<div class="font-xsssss opacity-75">1 historia • nueva</div></div></div></div>';
+            grid.prepend(col);
+        }
+    });
+})();
+</script>
 {% endblock %}

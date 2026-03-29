@@ -62,6 +62,9 @@
                                     <button type="submit" id="btn-subir" class="btn bg-current text-white fw-600 font-xssss rounded-xl px-4 py-2 w-100" disabled>
                                         <i class="feather-upload me-1"></i>Subir <span id="count-text">canciones</span>
                                     </button>
+                                    <div id="upload-hint" class="font-xsssss text-grey-500 mt-2" style="display:none;">
+                                        <i class="feather-loader me-1"></i>Subiendo archivos... no cierres esta página.
+                                    </div>
                                 </form>
 
                                 <hr class="my-4">
@@ -73,7 +76,7 @@
                                     </a>
                                 </div>
                                 <div class="collapse" id="form-individual">
-                                    <form method="post" enctype="multipart/form-data">
+                                    <form method="post" enctype="multipart/form-data" id="form-individual-cancion">
                                         {% csrf_token %}
                                         <div class="form-group mb-3">
                                             <label class="fw-600 font-xsss text-grey-900 mb-2">{{ form.titulo.label }}</label>
@@ -89,9 +92,12 @@
                                             <label class="fw-600 font-xsss text-grey-900 mb-2">{{ form.numero.label }}</label>
                                             {{ form.numero }}
                                         </div>
-                                        <button type="submit" class="btn bg-success text-white fw-600 font-xssss rounded-xl px-4 py-2">
+                                        <button type="submit" class="btn bg-success text-white fw-600 font-xssss rounded-xl px-4 py-2" id="btn-individual-cancion">
                                             <i class="feather-plus me-1"></i>Agregar canción
                                         </button>
+                                        <div id="upload-hint-individual" class="font-xsssss text-grey-500 mt-2" style="display:none;">
+                                            <i class="feather-loader me-1"></i>Subiendo canción... espera un momento.
+                                        </div>
                                     </form>
                                 </div>
                             </div>
@@ -152,6 +158,8 @@
     var listaDiv = document.getElementById('archivos-lista');
     var itemsDiv = document.getElementById('archivos-items');
     var btnSubir = document.getElementById('btn-subir');
+    var uploadHint = document.getElementById('upload-hint');
+    var formMulti = document.getElementById('form-multi');
     var btnLimpiar = document.getElementById('btn-limpiar');
     var countText = document.getElementById('count-text');
     var archivosSeleccionados = [];
@@ -230,6 +238,29 @@
         archivosSeleccionados = [];
         actualizarLista();
     });
+
+    if (formMulti) {
+        formMulti.addEventListener('submit', function() {
+            if (btnSubir) {
+                btnSubir.disabled = true;
+                btnSubir.innerHTML = '<i class="feather-loader me-1"></i>Subiendo...';
+            }
+            if (uploadHint) uploadHint.style.display = 'block';
+        });
+    }
+
+    var formIndividual = document.getElementById('form-individual-cancion');
+    var btnIndividual = document.getElementById('btn-individual-cancion');
+    var hintIndividual = document.getElementById('upload-hint-individual');
+    if (formIndividual) {
+        formIndividual.addEventListener('submit', function() {
+            if (btnIndividual) {
+                btnIndividual.disabled = true;
+                btnIndividual.innerHTML = '<i class="feather-loader me-1"></i>Subiendo...';
+            }
+            if (hintIndividual) hintIndividual.style.display = 'block';
+        });
+    }
 
     // Audio player
     var audio = document.getElementById('audio-player');

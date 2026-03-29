@@ -1,5 +1,6 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
+{% load usuario_extras %}
 
 {% block title %}Inicio - Veriffai{% endblock %}
 
@@ -9,13 +10,268 @@
 
                 <div class="col-xl-8 col-xxl-9 col-lg-8">
 
-                    {% if feed_albumes %}
-                    {% for album in feed_albumes %}
+                    <!-- Compositor de publicación -->
+                    <div class="card w-100 shadow-xss rounded-xxl border-0 p-3 mb-3" id="compositor">
+                        <div class="card-body p-0 d-flex align-items-center gap-3">
+                            <figure class="avatar m-0">
+                                {% if perfil.foto %}
+                                <img src="{{ perfil.foto.url }}" alt="foto" class="shadow-sm rounded-circle w45" style="width:45px;height:45px;object-fit:cover;" onerror="this.onerror=null;this.src='/static/sociala/images/user-12.png';">
+                                {% else %}
+                                <img src="{% static 'sociala/images/user-12.png' %}" alt="foto" class="shadow-sm rounded-circle w45">
+                                {% endif %}
+                            </figure>
+                            <button type="button" class="form-control text-start bg-greylight border-0 rounded-xl font-xssss text-grey-500" data-bs-toggle="modal" data-bs-target="#crearPublicacionModal">
+                                ¿Qué estás pensando, {{ perfil.nombre_completo|default:user.username }}?
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="modal fade" id="crearPublicacionModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered" style="max-width:640px;">
+                            <div class="modal-content border-0 rounded-4 overflow-hidden">
+                                <div class="modal-header">
+                                    <h3 class="fw-700 mb-0 font-md">Crear publicación</h3>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form method="post" action="{% url 'crear_publicacion' %}" enctype="multipart/form-data" id="form-publicacion">
+                                    {% csrf_token %}
+                                    <div class="modal-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <figure class="avatar me-2 m-0">
+                                                {% if perfil.foto %}
+                                                <img src="{{ perfil.foto.url }}" alt="foto" class="shadow-sm rounded-circle" style="width:52px;height:52px;object-fit:cover;" onerror="this.onerror=null;this.src='/static/sociala/images/user-12.png';">
+                                                {% else %}
+                                                <img src="{% static 'sociala/images/user-12.png' %}" alt="foto" class="shadow-sm rounded-circle" style="width:52px;height:52px;object-fit:cover;">
+                                                {% endif %}
+                                            </figure>
+                                            <div>
+                                                <div class="fw-700 text-grey-900">{{ perfil.nombre_completo|default:user.username }}</div>
+                                                <div class="font-xss text-grey-500"><i class="feather-globe"></i> Público</div>
+                                            </div>
+                                        </div>
+
+                                        {{ form_pub.contenido }}
+
+                                        <div class="mt-3 d-flex align-items-center gap-3 flex-wrap">
+                                            <label for="{{ form_pub.imagen.id_for_label }}" class="btn btn-light btn-sm d-flex align-items-center gap-1">
+                                                <i class="feather-image text-success"></i> Añadir foto
+                                            </label>
+                                            <div style="display:none;">{{ form_pub.imagen }}</div>
+                                            <button type="button" class="btn btn-light btn-sm d-flex align-items-center gap-1" id="btn-toggle-encuesta">
+                                                <i class="feather-bar-chart-2 text-primary"></i> Encuesta
+                                            </button>
+                                            <span id="nombre-imagen" class="font-xss text-grey-500"></span>
+                                        </div>
+
+                                        <div id="pub-encuesta-wrap" class="mt-3" style="display:none;">
+                                            <div class="d-flex align-items-center gap-2 mb-2">
+                                                <span class="font-xss text-grey-600">Duración:</span>
+                                                <select name="encuesta_duracion_min" id="encuesta_duracion_min" class="form-control form-control-sm" style="max-width:180px;">
+                                                    <option value="30">30 minutos</option>
+                                                    <option value="60">1 hora</option>
+                                                    <option value="180">3 horas</option>
+                                                    <option value="720">12 horas</option>
+                                                    <option value="1440" selected>24 horas</option>
+                                                    <option value="4320">3 días</option>
+                                                </select>
+                                            </div>
+                                            <input type="text" name="encuesta_pregunta" id="encuesta_pregunta" class="form-control mb-2" placeholder="Pregunta de la encuesta...">
+                                            <input type="text" name="encuesta_opcion1" id="encuesta_opcion1" class="form-control mb-2" placeholder="Opción 1">
+                                            <input type="text" name="encuesta_opcion2" id="encuesta_opcion2" class="form-control mb-2" placeholder="Opción 2">
+                                            <input type="text" name="encuesta_opcion3" id="encuesta_opcion3" class="form-control mb-2" placeholder="Opción 3 (opcional)">
+                                            <input type="text" name="encuesta_opcion4" id="encuesta_opcion4" class="form-control mb-2" placeholder="Opción 4 (opcional)">
+                                            <div id="encuesta-opciones-extra" class="mb-2"></div>
+                                            <button type="button" id="btn-add-opcion-extra" class="btn btn-light btn-sm">+ Agregar opción</button>
+
+                                            <div class="mt-2">
+                                                <button type="button" id="btn-toggle-encuesta2" class="btn btn-light btn-sm">+ Agregar otra pregunta</button>
+                                            </div>
+
+                                            <div id="pub-encuesta2-wrap" class="mt-2" style="display:none;">
+                                                <input type="text" name="encuesta2_pregunta" id="encuesta2_pregunta" class="form-control mb-2" placeholder="Pregunta 2...">
+                                                <input type="text" name="encuesta2_opcion1" id="encuesta2_opcion1" class="form-control mb-2" placeholder="Pregunta 2 - Opción 1">
+                                                <input type="text" name="encuesta2_opcion2" id="encuesta2_opcion2" class="form-control mb-2" placeholder="Pregunta 2 - Opción 2">
+                                                <input type="text" name="encuesta2_opcion3" id="encuesta2_opcion3" class="form-control mb-2" placeholder="Pregunta 2 - Opción 3 (opcional)">
+                                                <input type="text" name="encuesta2_opcion4" id="encuesta2_opcion4" class="form-control mb-2" placeholder="Pregunta 2 - Opción 4 (opcional)">
+                                                <div id="encuesta2-opciones-extra" class="mb-2"></div>
+                                                <button type="button" id="btn-add-opcion2-extra" class="btn btn-light btn-sm">+ Agregar opción pregunta 2</button>
+                                            </div>
+                                        </div>
+
+                                        <div id="preview-imagen-pub" class="mt-3" style="display:none;">
+                                            <div class="position-relative d-inline-block">
+                                                <img id="preview-img" src="" class="rounded-3" style="max-height:260px;max-width:100%;object-fit:cover;">
+                                                <button type="button" id="btn-quitar-imagen" class="position-absolute top-0 end-0 btn btn-sm bg-white rounded-circle shadow-sm border-0 p-1 m-1">
+                                                    <i class="feather-x text-grey-700 font-xssss"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="modal-footer d-flex align-items-center justify-content-between">
+                                        <span id="pub-error" class="font-xss text-danger" style="display:none;"></span>
+                                        <button type="submit" id="btn-publicar" class="btn bg-current text-white fw-600 font-xssss rounded-xl px-4 py-2">Publicar</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if feed %}
+                    {% for item in feed %}
+
+                    {% if item.tipo == 'publicacion' %}
+                    <!-- Tarjeta de publicación -->
+                    {% with pub=item.obj %}
+                    <div class="card w-100 shadow-xss rounded-xxl border-0 p-4 mb-3 pub-card" id="pub-{{ pub.pk }}" style="cursor:pointer;" data-pub-id="{{ pub.pk }}" data-pub-autor="{{ pub.autor.username }}" data-pub-autor-nombre="{{ pub.autor.perfil.nombre_completo }}" data-pub-foto="{% if pub.autor.perfil.foto %}{{ pub.autor.perfil.foto.url }}{% else %}/static/sociala/images/user-12.png{% endif %}" data-pub-creado="{{ pub.creado|date:'Y-m-d H:i' }}" data-pub-contenido="{{ pub.contenido|escape }}" data-pub-imagen="{% if pub.imagen %}{{ pub.imagen.url }}{% endif %}" data-pub-encuesta-pregunta="{{ pub.encuesta_pregunta|escape }}" data-pub-encuesta-opciones='[{% for opcion in pub.encuesta_opciones %}"{{ opcion|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}]'>
+                        <div class="card-body p-0 d-flex align-items-center">
+                            <figure class="avatar me-3 m-0">
+                                <a href="{% url 'pagina_usuario' pub.autor.username %}" onclick="event.stopPropagation();">
+                                    {% if pub.autor.perfil.foto %}
+                                    <img src="{{ pub.autor.perfil.foto.url }}" alt="foto" class="shadow-sm rounded-circle w45" style="width:45px;height:45px;object-fit:cover;" onerror="this.onerror=null;this.src='/static/sociala/images/user-12.png';">
+                                    {% else %}
+                                    <img src="{% static 'sociala/images/user-12.png' %}" alt="foto" class="shadow-sm rounded-circle w45">
+                                    {% endif %}
+                                </a>
+                            </figure>
+                            <h4 class="fw-700 text-grey-900 font-xssss mt-1 flex-grow-1">
+                                <a href="{% url 'pagina_usuario' pub.autor.username %}" class="text-grey-900 text-decoration-none" onclick="event.stopPropagation();">
+                                    {{ pub.autor.get_full_name|default:pub.autor.username }}
+                                </a>
+                                <span class="d-block font-xssss fw-500 mt-1 lh-3 text-grey-500">
+                                    {{ pub.creado|timesince }} &middot; <i class="feather-globe"></i>
+                                </span>
+                            </h4>
+                            {% if pub.autor == user %}
+                            <div class="ms-auto d-flex align-items-center gap-2">
+                                <button class="btn-edit-pub btn btn-sm p-0 border-0 bg-transparent text-grey-500"
+                                        data-pub="{{ pub.pk }}"
+                                        data-url="{% url 'editar_publicacion' pub.pk %}"
+                                        title="Editar">
+                                    <i class="feather-edit-2 font-xsss"></i>
+                                </button>
+                                <button class="btn-delete-pub btn btn-sm p-0 border-0 bg-transparent text-grey-500"
+                                        data-pub="{{ pub.pk }}"
+                                        data-url="{% url 'eliminar_publicacion' pub.pk %}"
+                                        title="Eliminar">
+                                    <i class="feather-trash-2 font-xsss"></i>
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="card-body p-0 mt-3">
+                            <p class="fw-500 font-xss text-grey-900 lh-26 pe-2 mb-0">{{ pub.contenido|linebreaksbr }}</p>
+                        </div>
+
+                        {% if pub.imagen %}
+                        <div class="card-body p-0 mt-3 rounded-xxl overflow-hidden pub-image-wrap">
+                            <img src="{{ pub.imagen.url }}" class="w-100 rounded-xxl" alt="imagen" style="max-height:400px;object-fit:cover;">
+                        </div>
+                        {% endif %}
+
+                        {% if pub.tiene_encuesta %}
+                        {% with total=pub.encuesta_total_votos %}
+                        {% with opciones=pub.encuesta_opciones mi_voto=publicaciones_encuesta_mi_voto|get_item:pub.pk %}
+                        <div class="card-body p-0 mt-3 pub-poll"
+                             data-pub-id="{{ pub.pk }}"
+                             data-opciones='[{% for opcion in opciones %}"{{ opcion|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}]'
+                             data-my-vote="{{ mi_voto|default:'' }}">
+                            <div class="poll-title fw-700 font-xssss text-grey-900 mb-2">{{ pub.encuesta_pregunta }}</div>
+
+                            <div class="d-grid gap-2 poll-actions mb-3">
+                                {% for opcion in opciones %}
+                                <button class="btn btn-light border btn-votar-encuesta {% if mi_voto == forloop.counter %}active{% endif %}" data-pub-id="{{ pub.pk }}" data-opcion="{{ forloop.counter }}">{{ opcion }}</button>
+                                {% endfor %}
+                            </div>
+
+                            <div class="poll-results">
+                                {% for opcion in opciones %}
+                                {% with votos=pub|encuesta_votos_opcion:forloop.counter %}
+                                <div class="poll-result mb-2">
+                                    <div class="d-flex justify-content-between font-xss mb-1"><span>{{ opcion }}</span><span>{{ votos }}</span></div>
+                                    <div class="poll-bar"><span style="width:{% if total > 0 %}{% widthratio votos total 100 %}{% else %}0{% endif %}%"></span></div>
+                                </div>
+                                {% endwith %}
+                                {% endfor %}
+                                <div class="font-xss text-grey-500 mt-2 poll-total">{{ total }} voto{{ total|pluralize }}</div>
+                            </div>
+
+                            <div class="poll-voters mt-2">
+                                {% for v in pub.encuesta_votos.all %}
+                                <div class="poll-voter-item">
+                                    <img src="{% if v.usuario.perfil.foto %}{{ v.usuario.perfil.foto.url }}{% elif v.usuario.perfil.get_foto %}{{ v.usuario.perfil.get_foto }}{% else %}{% static 'sociala/images/user-12.png' %}{% endif %}"
+                                         class="poll-voter-avatar"
+                                         onerror="this.src='{% static 'sociala/images/user-12.png' %}'">
+                                    <span class="font-xss text-grey-700">{{ v.usuario.perfil.nombre_completo }} • {{ opciones|poll_option:v.opcion }}</span>
+                                </div>
+                                {% empty %}
+                                <div class="font-xss text-grey-500">Aún sin votos</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endwith %}
+                        {% endwith %}
+                        {% endif %}
+
+                        <div class="card-body d-flex align-items-center p-0 mt-3">
+                            <div class="like-bar d-flex align-items-center">
+                                <div class="like-avatars me-1" data-type="publicacion" data-id="{{ pub.pk }}">
+                                    {% for liker in pub.likes.all|slice:":3" %}
+                                    <img src="{% if liker.perfil.foto %}{{ liker.perfil.foto.url }}{% else %}{% static 'sociala/images/user-12.png' %}{% endif %}"
+                                         data-uname="{{ liker.username }}"
+                                         title="{{ liker.username }}"
+                                         class="rounded-circle border border-white"
+                                         style="width:20px;height:20px;object-fit:cover;{% if not forloop.first %}margin-left:-5px;{% endif %}display:inline-block;"
+                                         onerror="this.onerror=null;this.src='/static/sociala/images/user-12.png';">
+                                    {% endfor %}
+                                </div>
+                                <span class="like-count-pub-{{ pub.pk }} text-grey-500 fw-500 font-xsssss ms-1">{{ pub.num_likes }}</span>
+                            </div>
+                            <span class="ms-2 font-xsssss text-grey-500 comment-count-pub-{{ pub.pk }}">{{ pub.num_comentarios }} comentarios</span>
+                            <button class="btn-like ms-auto d-flex align-items-center fw-600 lh-26 font-xssss border-0 bg-transparent p-0"
+                                    data-tipo="publicacion"
+                                    data-id="{{ pub.pk }}"
+                                    data-url="{% url 'like_publicacion' pub.pk %}"
+                                    data-liked="{% if user in pub.likes.all %}true{% else %}false{% endif %}">
+                                <i class="feather-heart {% if user in pub.likes.all %}text-danger{% else %}text-grey-400{% endif %} font-lg me-1" style="transition:color 0.2s;"></i>
+                                <span class="d-none d-sm-inline text-grey-600 font-xssss">Me gusta</span>
+                            </button>
+                        </div>
+
+                        <div class="card-body p-0 mt-2">
+                            <div class="pub-comments pub-comments-{{ pub.pk }}" style="max-height:160px;overflow:auto;">
+                                {% for c in pub.comentarios.all|slice:'-5:' %}
+                                <div class="pub-comment-item">
+                                    <img src="{% if c.autor.perfil.foto %}{{ c.autor.perfil.foto.url }}{% else %}{% static 'sociala/images/user-12.png' %}{% endif %}" class="pub-comment-avatar" alt="avatar" onerror="this.src='{% static 'sociala/images/user-12.png' %}'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+                                    <div>
+                                        <span class="fw-700 font-xssss">{{ c.autor.perfil.nombre_completo }}:</span>
+                                        <span class="font-xssss text-grey-800">{{ c.contenido }}</span>
+                                        <span class="text-grey-400 font-xsssss ms-1">{{ c.creado|time:'H:i' }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <form class="d-flex mt-2 form-comentar-pub" data-pub-id="{{ pub.pk }}" data-url="{% url 'comentar_publicacion' pub.pk %}" onclick="event.stopPropagation();">
+                                <input type="text" class="form-control bg-greylight border-0 font-xssss" name="contenido" placeholder="Comentar...">
+                                <button class="btn btn-sm btn-primary ms-2" type="submit">Enviar</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endwith %}
+
+                    {% elif item.tipo == 'album' %}
+                    <!-- Tarjeta de álbum -->
+                    {% with album=item.obj %}
                     <div class="card w-100 shadow-xss rounded-xxl border-0 p-4 mb-3">
                         <div class="card-body p-0 d-flex align-items-center">
                             <figure class="avatar me-3 m-0">
                                 <a href="{% url 'pagina_usuario' album.artista.username %}">
+                                    {% if album.artista.perfil.foto %}
+                                    <img src="{{ album.artista.perfil.foto.url }}" alt="foto" class="shadow-sm rounded-circle w45" style="width:45px;height:45px;object-fit:cover;" onerror="this.onerror=null;this.src='/static/sociala/images/user-12.png';">
+                                    {% else %}
                                     <img src="{% static 'sociala/images/user-12.png' %}" alt="image" class="shadow-sm rounded-circle w45">
+                                    {% endif %}
                                 </a>
                             </figure>
                             <h4 class="fw-700 text-grey-900 font-xssss mt-1">
@@ -23,7 +279,7 @@
                                     {{ album.artista.get_full_name|default:album.artista.username }}
                                 </a>
                                 <span class="d-block font-xssss fw-500 mt-1 lh-3 text-grey-500">
-                                    publico un album &middot; {{ album.creado|timesince }}
+                                    publicó un álbum &middot; {{ album.creado|timesince }}
                                 </span>
                             </h4>
                         </div>
@@ -55,24 +311,49 @@
                             </div>
                         </a>
 
-                        <div class="card-body d-flex p-0 mt-3">
-                            <a href="{% url 'detalle_album' album.pk %}" class="d-flex align-items-center fw-600 text-grey-900 lh-26 font-xssss">
-                                <i class="feather-headphones text-current btn-round-sm font-lg me-1"></i>
-                                <span>Escuchar</span>
-                            </a>
-                            <a href="{% url 'pagina_usuario' album.artista.username %}" class="ms-auto d-flex align-items-center fw-600 text-grey-500 lh-26 font-xssss">
-                                <i class="feather-user me-1"></i>Ver perfil
-                            </a>
+                        <div class="card-body d-flex align-items-center p-0 mt-3">
+                            <!-- like reaction bar -->
+                            <div class="like-bar d-flex align-items-center">
+                                {% if album.likes.all|length > 0 %}
+                                <div class="like-avatars me-1" data-type="album" data-id="{{ album.pk }}">
+                                    {% for liker in album.likes.all|slice:":3" %}
+                                    {% if liker.perfil.foto %}
+                                    <img src="{{ liker.perfil.foto.url }}" class="like-avatar-img rounded-circle" title="{{ liker.get_full_name|default:liker.username }}" style="width:20px;height:20px;object-fit:cover;border:2px solid #fff;margin-left:-6px;" onerror="this.onerror=null;this.src='/static/sociala/images/user-12.png';">
+                                    {% else %}
+                                    <img src="{% static 'sociala/images/user-12.png' %}" class="like-avatar-img rounded-circle" title="{{ liker.get_full_name|default:liker.username }}" style="width:20px;height:20px;object-fit:cover;border:2px solid #fff;margin-left:-6px;">
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <span class="like-count-album-{{ album.pk }} text-grey-500 fw-500 font-xsssss ms-1">{{ album.num_likes }}</span>
+                            </div>
+                            <div class="ms-auto d-flex align-items-center gap-3">
+                                <a href="{% url 'detalle_album' album.pk %}" class="d-flex align-items-center fw-600 text-grey-900 lh-26 font-xssss">
+                                    <i class="feather-headphones text-current font-lg me-1"></i>
+                                    <span>Escuchar</span>
+                                </a>
+                                <button class="btn-like-album d-flex align-items-center fw-600 lh-26 font-xssss border-0 bg-transparent p-0"
+                                        data-tipo="album"
+                                        data-id="{{ album.pk }}"
+                                        data-url="{% url 'like_album' album.pk %}"
+                                        data-liked="{% if album.pk in mis_likes_albumes %}true{% else %}false{% endif %}">
+                                    <i class="feather-heart {% if album.pk in mis_likes_albumes %}text-danger{% else %}text-grey-400{% endif %} font-lg me-1" style="transition:color 0.2s;"></i>
+                                    <span class="d-none d-sm-inline text-grey-600 font-xssss">Me gusta</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
+                    {% endwith %}
+
+                    {% endif %}
                     {% endfor %}
 
                     {% else %}
-                    <div class="card w-100 shadow-xss rounded-xxl border-0 p-4 mb-3">
+                    <div class="card w-100 shadow-xss rounded-xxl border-0 p-4 mb-3 feed-empty">
                         <div class="text-center py-5">
                             <i class="feather-rss text-grey-300" style="font-size:60px;"></i>
-                            <h4 class="fw-700 font-xss text-grey-900 mt-4 mb-2">Tu feed esta vacio</h4>
-                            <p class="font-xsss text-grey-500 fw-500 mb-0">Sigue a otros usuarios para ver sus albumes publicos aqui.</p>
+                            <h4 class="fw-700 font-xss text-grey-900 mt-4 mb-2">Tu feed está vacío</h4>
+                            <p class="font-xsss text-grey-500 fw-500 mb-0">Sigue a otros usuarios para ver sus publicaciones y álbumes aquí.</p>
                         </div>
                     </div>
                     {% endif %}
@@ -82,7 +363,7 @@
                 <div class="col-xl-4 col-xxl-3 col-lg-4 ps-lg-0">
                     <div class="card w-100 shadow-xss rounded-xxl border-0 mb-3">
                         <div class="card-body d-flex align-items-center p-4">
-                            <h4 class="fw-700 mb-0 font-xssss text-grey-900"><i class="feather-disc text-current me-2"></i>Mis Albumes</h4>
+                            <h4 class="fw-700 mb-0 font-xssss text-grey-900"><i class="feather-disc text-current me-2"></i>Mis Álbumes</h4>
                             <a href="{% url 'mis_albumes' %}" class="fw-600 ms-auto font-xssss text-primary">Ver todos</a>
                         </div>
                         <div class="card-body pt-0 pb-3 ps-4 pe-4">
@@ -103,8 +384,8 @@
                                 </div>
                             </div>
                             {% empty %}
-                            <p class="font-xsss text-grey-500 mb-0">Aun no has creado albumes.</p>
-                            <a href="{% url 'crear_album' %}" class="fw-600 font-xssss text-primary">Crear mi primer album</a>
+                            <p class="font-xsss text-grey-500 mb-0">Aún no has creado álbumes.</p>
+                            <a href="{% url 'crear_album' %}" class="fw-600 font-xssss text-primary">Crear mi primer álbum</a>
                             {% endfor %}
                         </div>
                     </div>
@@ -114,59 +395,1472 @@
         </div>
 
 <script>
-(function() {
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    const ws = new WebSocket(proto + '://' + location.host + '/ws/feed/');
-    const feedContainer = document.querySelector('.col-xl-8.col-xxl-9.col-lg-8');
-    const defaultImg = "{% static 'sociala/images/user-12.png' %}";
+document.addEventListener('DOMContentLoaded', function () {
+(function () {
+    'use strict';
 
-    ws.onmessage = function(e) {
-        const data = JSON.parse(e.data);
-        if (data.event === 'nuevo_album') {
-            // Eliminar mensaje de "feed vacío" si existe
-            const empty = feedContainer.querySelector('.text-center.py-5');
-            if (empty) empty.closest('.card').remove();
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return '';
+    }
 
-            const portadaHtml = data.portada
-                ? '<img src="' + data.portada + '" class="position-absolute top-0 start-0 w-100 h-100" style="object-fit:cover;" alt="' + data.titulo + '">'
-                : '<div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-greylight"><i class="feather-disc text-grey-400" style="font-size:50px;"></i></div>';
+    const CSRF = getCookie('csrftoken') || '{{ csrf_token }}';
+    const CURRENT_USER = '{{ user.username }}';
+    const DEFAULT_IMG = "{% static 'sociala/images/user-12.png' %}";
+    const feedCol = document.querySelector('.col-xl-8.col-xxl-9.col-lg-8');
+    const compositor = document.getElementById('compositor');
 
-            const card = document.createElement('div');
-            card.className = 'card w-100 shadow-xss rounded-xxl border-0 p-4 mb-3';
-            card.style.animation = 'fadeInDown 0.5s ease';
-            card.innerHTML = `
-                <div class="card-body p-0 d-flex align-items-center">
-                    <figure class="avatar me-3 m-0">
-                        <a href="/usuario/${data.artista_username}/"><img src="${defaultImg}" class="shadow-sm rounded-circle w45"></a>
-                    </figure>
-                    <h4 class="fw-700 text-grey-900 font-xssss mt-1">
-                        <a href="/usuario/${data.artista_username}/" class="text-grey-900 text-decoration-none">${data.artista_nombre}</a>
-                        <span class="d-block font-xssss fw-500 mt-1 lh-3 text-grey-500">publicó un álbum &middot; justo ahora</span>
-                    </h4>
+    /* ── Scroll al fondo de comentarios existentes al cargar ── */
+    document.querySelectorAll('[class*="pub-comments-"]').forEach(function(el) {
+        el.scrollTop = el.scrollHeight;
+    });
+
+    /* ── Helpers ─────────────────────────────────────── */
+    function nl2br(str) {
+        return str.replace(/\n/g, '<br>');
+    }
+
+    function esc(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function insertAfterCompositor(el) {
+        el.style.animation = 'fadeInDown 0.4s ease';
+        compositor.insertAdjacentElement('afterend', el);
+        // Quitar el mensaje de "feed vacío" si existe
+        const empty = feedCol.querySelector('.feed-empty');
+        if (empty) empty.remove();
+    }
+
+    function buildPollHtml(d) {
+        const pregunta = (d.encuesta_pregunta || '').trim();
+        const opciones = Array.isArray(d.encuesta_opciones)
+            ? d.encuesta_opciones.filter(Boolean)
+            : [d.encuesta_opcion1, d.encuesta_opcion2, d.encuesta_opcion3, d.encuesta_opcion4].filter(Boolean);
+        if (!pregunta || opciones.length < 2) return '';
+
+        const buttons = opciones.map((op, idx) =>
+            `<button class="btn btn-light border btn-votar-encuesta" data-pub-id="${d.pub_id}" data-opcion="${idx + 1}">${esc(op)}</button>`
+        ).join('');
+
+        return `
+            <div class="card-body p-0 mt-3 pub-poll"
+                 data-pub-id="${d.pub_id}"
+                 data-opciones='${esc(JSON.stringify(opciones))}'
+                 data-my-vote="">
+                <div class="poll-title fw-700 font-xssss text-grey-900 mb-2">${esc(pregunta)}</div>
+                <div class="d-grid gap-2 poll-actions mb-3">${buttons}</div>
+                <div class="poll-results"></div>
+                <div class="poll-voters mt-2"><div class="font-xss text-grey-500">Aún sin votos</div></div>
+            </div>`;
+    }
+
+    function renderPollResults(pubId, resultados, totalVotos, votosDetalle, myVote) {
+        const pollWrap = document.querySelector(`.pub-poll[data-pub-id="${pubId}"]`);
+        if (!pollWrap) return;
+
+        if (myVote) {
+            pollWrap.dataset.myVote = String(myVote);
+        }
+
+        const activeVote = parseInt(pollWrap.dataset.myVote || '0', 10);
+        pollWrap.querySelectorAll('.btn-votar-encuesta').forEach(function (btn) {
+            const isActive = parseInt(btn.dataset.opcion || '0', 10) === activeVote;
+            btn.classList.toggle('active', isActive);
+        });
+
+        const resultsContainer = pollWrap.querySelector('.poll-results');
+        const resultsHtml = (resultados || []).map(function (it) {
+            return `
+                <div class="poll-result mb-2">
+                    <div class="d-flex justify-content-between font-xss mb-1"><span>${esc(it.texto)}</span><span>${it.votos}</span></div>
+                    <div class="poll-bar"><span style="width:${it.porcentaje}%"></span></div>
+                </div>`;
+        }).join('');
+        if (resultsContainer) {
+            resultsContainer.innerHTML = `${resultsHtml}<div class="font-xss text-grey-500 mt-2 poll-total">${totalVotos || 0} voto(s)</div>`;
+        }
+
+        const votersContainer = pollWrap.querySelector('.poll-voters');
+        if (votersContainer) {
+            const votersHtml = (votosDetalle || []).map(function (v) {
+                const foto = v.foto || DEFAULT_IMG;
+                return `
+                    <div class="poll-voter-item">
+                        <img src="${esc(foto)}" class="poll-voter-avatar" onerror="this.src='${DEFAULT_IMG}'">
+                        <span class="font-xss text-grey-700">${esc(v.nombre || v.username)} • ${esc(v.opcion_texto || ('Opción ' + v.opcion))}</span>
+                    </div>`;
+            }).join('');
+            votersContainer.innerHTML = votersHtml || '<div class="font-xss text-grey-500">Aún sin votos</div>';
+        }
+    }
+
+    /* ── Renderizar tarjeta de publicación ───────────── */
+    function renderPublicacion(d) {
+        const foto = d.autor_foto || DEFAULT_IMG;
+        const ownerActions = d.es_propio
+            ? `<div class="ms-auto d-flex align-items-center gap-2">
+                   <button class="btn-edit-pub btn btn-sm p-0 border-0 bg-transparent text-grey-500"
+                           data-pub="${d.pub_id}" data-url="/publicaciones/${d.pub_id}/editar/" title="Editar">
+                       <i class="feather-edit-2 font-xsss"></i>
+                   </button>
+                   <button class="btn-delete-pub btn btn-sm p-0 border-0 bg-transparent text-grey-500"
+                           data-pub="${d.pub_id}" data-url="${d.url_eliminar}" title="Eliminar">
+                       <i class="feather-trash-2 font-xsss"></i>
+                   </button>
+               </div>`
+            : '';
+        const imgHtml = d.imagen
+            ? `<div class="card-body p-0 mt-3 rounded-xxl overflow-hidden">
+                   <img src="${d.imagen}" class="w-100 rounded-xxl" style="max-height:400px;object-fit:cover;">
+               </div>`
+            : '';
+        const pollHtml = buildPollHtml(d);
+
+        const card = document.createElement('div');
+        card.className = 'card w-100 shadow-xss rounded-xxl border-0 p-4 mb-3';
+        card.id = `pub-${d.pub_id}`;
+        card.classList.add('pub-card');
+        card.dataset.pubId = String(d.pub_id || '');
+        card.dataset.pubContenido = d.contenido || '';
+        card.dataset.pubEncuestaPregunta = d.encuesta_pregunta || '';
+        card.dataset.pubEncuestaOpciones = JSON.stringify(Array.isArray(d.encuesta_opciones)
+            ? d.encuesta_opciones
+            : [d.encuesta_opcion1, d.encuesta_opcion2, d.encuesta_opcion3, d.encuesta_opcion4].filter(Boolean));
+        card.innerHTML = `
+            <div class="card-body p-0 d-flex align-items-center">
+                <figure class="avatar me-3 m-0">
+                    <a href="${d.url_perfil}">
+                        <img src="${foto}" class="shadow-sm rounded-circle w45" style="width:45px;height:45px;object-fit:cover;">
+                    </a>
+                </figure>
+                <h4 class="fw-700 text-grey-900 font-xssss mt-1 flex-grow-1">
+                    <a href="${d.url_perfil}" class="text-grey-900 text-decoration-none">${d.autor_nombre}</a>
+                    <span class="d-block font-xssss fw-500 mt-1 lh-3 text-grey-500">justo ahora &middot; <i class="feather-globe"></i></span>
+                </h4>
+                ${ownerActions}
+            </div>
+            <div class="card-body p-0 mt-3">
+                <p class="fw-500 font-xss text-grey-900 lh-26 pe-2 mb-0">${nl2br(d.contenido)}</p>
+            </div>
+            ${imgHtml}
+            ${pollHtml}
+            <div class="card-body d-flex align-items-center p-0 mt-3">
+                <div class="like-bar d-flex align-items-center">
+                    <div class="like-avatars me-1" data-type="publicacion" data-id="${d.pub_id}"></div>
+                    <span class="like-count-pub-${d.pub_id} text-grey-500 fw-500 font-xsssss ms-1">0</span>
                 </div>
-                <a href="/albumes/${data.album_id}/" class="text-decoration-none">
-                    <div class="card-body p-0 mt-3">
-                        <div class="row g-0 rounded-xxl overflow-hidden shadow-xss">
-                            <div class="col-4 position-relative" style="min-height:180px;">${portadaHtml}</div>
-                            <div class="col-8 d-flex flex-column justify-content-center p-3">
-                                <span class="badge bg-current text-white font-xsssss fw-600 rounded-xl px-2 py-1 mb-2" style="width:fit-content;">${data.genero}</span>
-                                <h3 class="fw-700 font-xss text-grey-900 mb-1">${data.titulo}</h3>
-                                <p class="font-xsssss text-grey-500 mb-1"><i class="feather-music me-1"></i>${data.num_canciones} canciones <span class="ms-2"><i class="feather-clock me-1"></i>${data.duracion}</span></p>
-                                ${data.descripcion ? '<p class="font-xsssss text-grey-500 mb-0">' + data.descripcion + '</p>' : ''}
-                            </div>
+                <span class="ms-2 font-xsssss text-grey-500 comment-count-pub-${d.pub_id}">${d.comentarios_total || 0} comentarios</span>
+                <button class="btn-like ms-auto d-flex align-items-center fw-600 lh-26 font-xssss border-0 bg-transparent p-0"
+                        data-tipo="publicacion" data-id="${d.pub_id}" data-url="${d.url_like}" data-liked="false">
+                    <i class="feather-heart text-grey-400 font-lg me-1" style="transition:color 0.2s;"></i>
+                    <span class="d-none d-sm-inline text-grey-600 font-xssss">Me gusta</span>
+                </button>
+            </div>
+            <div class="card-body p-0 mt-2">
+                <div class="pub-comments pub-comments-${d.pub_id}" style="max-height:160px;overflow:auto;"></div>
+                <form class="d-flex mt-2 form-comentar-pub" data-pub-id="${d.pub_id}" data-url="/publicaciones/${d.pub_id}/comentar/">
+                    <input type="text" class="form-control bg-greylight border-0 font-xssss" name="contenido" placeholder="Comentar...">
+                    <button class="btn btn-sm btn-primary ms-2" type="submit">Enviar</button>
+                </form>
+            </div>`;
+        return card;
+    }
+
+    function appendComentarioPublicacion(data) {
+        var list = document.querySelector('.pub-comments-' + data.pub_id);
+        if (!list) return;
+        var item = document.createElement('div');
+        item.className = 'pub-comment-item';
+        const foto = data.autor_foto || DEFAULT_IMG;
+        item.innerHTML = '<img src="' + foto + '" class="pub-comment-avatar" alt="avatar" onerror="this.src=\'' + DEFAULT_IMG + '\'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;margin-right:8px;">' +
+            '<div>' +
+            '<span class="fw-700 font-xssss">' + esc(data.autor_nombre || data.autor_username) + ':</span> ' +
+            '<span class="font-xssss text-grey-800">' + esc(data.contenido) + '</span> ' +
+            '<span class="text-grey-400 font-xsssss">' + esc(data.creado) + '</span>' +
+            '</div>';
+        list.appendChild(item);
+        list.scrollTop = list.scrollHeight;
+        var count = document.querySelector('.comment-count-pub-' + data.pub_id);
+        if (count) count.textContent = (data.total_comentarios || 0) + ' comentarios';
+    }
+
+    /* ── Renderizar tarjeta de álbum ─────────────────── */
+    function renderAlbum(d) {
+        const foto = d.artista_foto || DEFAULT_IMG;
+        const portadaHtml = d.portada
+            ? `<img src="${d.portada}" class="position-absolute top-0 start-0 w-100 h-100" style="object-fit:cover;">`
+            : `<div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-greylight">
+                   <i class="feather-disc text-grey-400" style="font-size:50px;"></i>
+               </div>`;
+        const card = document.createElement('div');
+        card.className = 'card w-100 shadow-xss rounded-xxl border-0 p-4 mb-3';
+        card.innerHTML = `
+            <div class="card-body p-0 d-flex align-items-center">
+                <figure class="avatar me-3 m-0">
+                    <a href="/usuario/${d.artista_username}/">
+                        <img src="${foto}" class="shadow-sm rounded-circle w45" style="width:45px;height:45px;object-fit:cover;">
+                    </a>
+                </figure>
+                <h4 class="fw-700 text-grey-900 font-xssss mt-1">
+                    <a href="/usuario/${d.artista_username}/" class="text-grey-900 text-decoration-none">${d.artista_nombre}</a>
+                    <span class="d-block font-xssss fw-500 mt-1 lh-3 text-grey-500">publicó un álbum &middot; justo ahora</span>
+                </h4>
+            </div>
+            <a href="/albumes/${d.album_id}/" class="text-decoration-none">
+                <div class="card-body p-0 mt-3">
+                    <div class="row g-0 rounded-xxl overflow-hidden shadow-xss">
+                        <div class="col-4 position-relative" style="min-height:180px;">${portadaHtml}</div>
+                        <div class="col-8 d-flex flex-column justify-content-center p-3">
+                            <span class="badge bg-current text-white font-xsssss fw-600 rounded-xl px-2 py-1 mb-2" style="width:fit-content;">${d.genero}</span>
+                            <h3 class="fw-700 font-xss text-grey-900 mb-1">${d.titulo}</h3>
+                            <p class="font-xsssss text-grey-500 mb-1">
+                                <i class="feather-music me-1"></i>${d.num_canciones} canciones
+                                <span class="ms-2"><i class="feather-clock me-1"></i>${d.duracion}</span>
+                            </p>
+                            ${d.descripcion ? `<p class="font-xsssss text-grey-500 mb-0">${d.descripcion}</p>` : ''}
                         </div>
                     </div>
-                </a>
-                <div class="card-body d-flex p-0 mt-3">
-                    <a href="/albumes/${data.album_id}/" class="d-flex align-items-center fw-600 text-grey-900 lh-26 font-xssss"><i class="feather-headphones text-current btn-round-sm font-lg me-1"></i><span>Escuchar</span></a>
-                    <a href="/usuario/${data.artista_username}/" class="ms-auto d-flex align-items-center fw-600 text-grey-500 lh-26 font-xssss"><i class="feather-user me-1"></i>Ver perfil</a>
-                </div>`;
-            feedContainer.insertBefore(card, feedContainer.firstChild);
+                </div>
+            </a>
+            <div class="card-body d-flex align-items-center p-0 mt-3">
+                <div class="like-bar d-flex align-items-center">
+                    <div class="like-avatars me-1" data-type="album" data-id="${d.album_id}"></div>
+                    <span class="like-count-album-${d.album_id} text-grey-500 fw-500 font-xsssss ms-1">0</span>
+                </div>
+                <div class="ms-auto d-flex align-items-center gap-3">
+                    <a href="/albumes/${d.album_id}/" class="d-flex align-items-center fw-600 text-grey-900 lh-26 font-xssss">
+                        <i class="feather-headphones text-current font-lg me-1"></i><span>Escuchar</span>
+                    </a>
+                    <button class="btn-like-album d-flex align-items-center fw-600 lh-26 font-xssss border-0 bg-transparent p-0"
+                            data-tipo="album" data-id="${d.album_id}" data-url="/albumes/${d.album_id}/like/" data-liked="false">
+                        <i class="feather-heart text-grey-400 font-lg me-1" style="transition:color 0.2s;"></i>
+                        <span class="d-none d-sm-inline text-grey-600 font-xssss">Me gusta</span>
+                    </button>
+                </div>
+            </div>`;
+        return card;
+    }
+
+    /* ── Actualizar like en tiempo real ─────────────── */
+    function actualizarLike(data) {
+        const tipo  = data.tipo;
+        const id    = data.obj_id;
+        const total = data.total;
+        const foto  = data.user_foto;
+        const uname = data.user_username;
+
+        // Actualizar contador
+        const span = document.querySelector(
+            tipo === 'publicacion'
+                ? `.like-count-pub-${id}`
+                : `.like-count-album-${id}`
+        );
+        if (span) span.textContent = total;
+
+        // Añadir burbuja de avatar si no existe ya para ese usuario
+        const container = document.querySelector(
+            `.like-avatars[data-type="${tipo}"][data-id="${id}"]`
+        );
+        if (container && foto) {
+            const existing = container.querySelector(`img[data-uname="${uname}"]`);
+            if (!existing) {
+                const img = document.createElement('img');
+                img.src = foto;
+                img.dataset.uname = uname;
+                img.title = uname;
+                img.className = 'rounded-circle border border-white';
+                img.style.cssText = 'width:20px;height:20px;object-fit:cover;display:inline-block;' +
+                    (container.children.length > 0 ? 'margin-left:-5px;' : '');
+                container.appendChild(img);
+            }
         }
-    };
+    }
+
+    /* ── WebSocket ───────────────────────────────────── */
+    let ws, wsRetries = 0;
+
+    function conectarWS() {
+        const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+        ws = new WebSocket(proto + '://' + location.host + '/ws/feed/');
+
+        ws.onmessage = function (e) {
+            const data = JSON.parse(e.data);
+
+            if (data.event === 'nueva_publicacion') {
+                // Evitar duplicados si ya está en el DOM (ej: autor en su propio post)
+                if (document.getElementById(`pub-${data.pub_id}`)) return;
+                insertAfterCompositor(renderPublicacion(data));
+            }
+
+            if (data.event === 'nuevo_album') {
+                insertAfterCompositor(renderAlbum(data));
+            }
+
+            if (data.event === 'like_update') {
+                actualizarLike(data);
+            }
+
+            if (data.event === 'publicacion_eliminada') {
+                const card = document.getElementById(`pub-${data.pub_id}`);
+                if (card) removePublicationCard(card);
+            }
+
+            if (data.event === 'publicacion_comentario_nuevo') {
+                appendComentarioPublicacion(data);
+            }
+
+            if (data.event === 'publicacion_encuesta_voto') {
+                renderPollResults(data.pub_id, data.resultados, data.total_votos, data.votos_detalle);
+            }
+        };
+
+        ws.onclose = function () {
+            // Reconexión exponencial hasta 30s
+            const delay = Math.min(1000 * Math.pow(2, wsRetries), 30000);
+            wsRetries++;
+            setTimeout(conectarWS, delay);
+        };
+
+        ws.onopen = function () { wsRetries = 0; };
+    }
+
+    conectarWS();
+    /* ── WebSocket global (likes en tiempo real) ────── */
+    // Se reutiliza la conexión global (_globalWS) iniciada en base.html
+    window.addEventListener('ws_global', function (e) {
+        const data = e.detail;
+        if (data.event === 'like_update') actualizarLike(data);
+        if (data.event === 'publicacion_comentario_nuevo') appendComentarioPublicacion(data);
+        if (data.event === 'publicacion_encuesta_voto') renderPollResults(data.pub_id, data.resultados, data.total_votos, data.votos_detalle);
+    });
+    /* ── Formulario de publicación (AJAX) ────────────── */
+    const formPub     = document.getElementById('form-publicacion');
+    const textarea    = formPub ? formPub.querySelector('textarea') : null;
+    const imgInput    = formPub ? formPub.querySelector('input[type="file"]') : null;
+    const nombreImg   = document.getElementById('nombre-imagen');
+    const previewWrap = document.getElementById('preview-imagen-pub');
+    const previewImg  = document.getElementById('preview-img');
+    const pubError    = document.getElementById('pub-error');
+    const btnPublicar = document.getElementById('btn-publicar');
+    const btnToggleEncuesta = document.getElementById('btn-toggle-encuesta');
+    const encuestaWrap = document.getElementById('pub-encuesta-wrap');
+    const encuesta2Wrap = document.getElementById('pub-encuesta2-wrap');
+    const btnToggleEncuesta2 = document.getElementById('btn-toggle-encuesta2');
+    const encuestaExtraWrap = document.getElementById('encuesta-opciones-extra');
+    const encuesta2ExtraWrap = document.getElementById('encuesta2-opciones-extra');
+    const btnAddOpcionExtra = document.getElementById('btn-add-opcion-extra');
+    const btnAddOpcion2Extra = document.getElementById('btn-add-opcion2-extra');
+    const crearPubModalEl = document.getElementById('crearPublicacionModal');
+    const confirmDeletePubModalEl = document.getElementById('confirmDeletePubModal');
+    const confirmDeletePubBtn = document.getElementById('confirmDeletePubBtn');
+    const editPubModalEl = document.getElementById('editPublicacionModal');
+    const formEditPub = document.getElementById('form-edit-publicacion');
+    const editPubIdInput = document.getElementById('edit_pub_id');
+    const editPubContenidoInput = document.getElementById('edit_pub_contenido');
+    const editPollWrap = document.getElementById('edit-pub-encuesta-wrap');
+    const editPollPregunta = document.getElementById('edit_encuesta_pregunta');
+    const editPollOp1 = document.getElementById('edit_encuesta_opcion1');
+    const editPollOp2 = document.getElementById('edit_encuesta_opcion2');
+    const editPollOp3 = document.getElementById('edit_encuesta_opcion3');
+    const editPollOp4 = document.getElementById('edit_encuesta_opcion4');
+    const editPollExtras = document.getElementById('edit-encuesta-opciones-extra');
+    const editPollDuration = document.getElementById('edit_encuesta_duracion_min');
+    const editPollRemove = document.getElementById('edit_encuesta_remove');
+    const editPubError = document.getElementById('edit-pub-error');
+    const editPubImageInput = document.getElementById('edit_pub_imagen');
+    const editPubImageRemove = document.getElementById('edit_pub_eliminar_imagen');
+    const editPubImagePreviewWrap = document.getElementById('edit_pub_img_preview_wrap');
+    const editPubImagePreview = document.getElementById('edit_pub_img_preview');
+    const actionToastEl = document.getElementById('actionToast');
+    const actionToastBody = document.getElementById('actionToastBody');
+
+    let pendingDelete = { pubId: null, url: null };
+    let actionToastInstance = null;
+
+    function parseJsonAttr(value, fallback) {
+        if (!value) return fallback;
+        try { return JSON.parse(value); } catch (_) { return fallback; }
+    }
+
+    function getModalInstance(modalEl) {
+        if (!modalEl || !window.bootstrap || !bootstrap.Modal) return null;
+        if (typeof bootstrap.Modal.getOrCreateInstance === 'function') {
+            return bootstrap.Modal.getOrCreateInstance(modalEl);
+        }
+        if (typeof bootstrap.Modal.getInstance === 'function') {
+            return bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+        }
+        return new bootstrap.Modal(modalEl);
+    }
+
+    function getToastInstance(toastEl) {
+        if (!toastEl || !window.bootstrap || !bootstrap.Toast) return null;
+        if (typeof bootstrap.Toast.getOrCreateInstance === 'function') {
+            return bootstrap.Toast.getOrCreateInstance(toastEl);
+        }
+        if (typeof bootstrap.Toast.getInstance === 'function') {
+            return bootstrap.Toast.getInstance(toastEl) || new bootstrap.Toast(toastEl);
+        }
+        return new bootstrap.Toast(toastEl);
+    }
+
+    function removePublicationCard(card) {
+        if (!card) return;
+        card.classList.add('publication-exit-animation');
+        setTimeout(function () {
+            card.remove();
+        }, 280);
+    }
+
+    function showActionMessage(message) {
+        if (!actionToastEl || !actionToastBody || !window.bootstrap || !bootstrap.Toast) return;
+        actionToastBody.textContent = message;
+        if (!actionToastInstance) {
+            actionToastInstance = getToastInstance(actionToastEl);
+        }
+        if (actionToastInstance && typeof actionToastInstance.show === 'function') {
+            actionToastInstance.show();
+        }
+    }
+
+    function syncEditPollState() {
+        if (!editPollWrap) return;
+        const isVisible = editPollWrap.style.display !== 'none';
+        const isRemoving = !!(editPollRemove && editPollRemove.checked);
+        const disabled = !isVisible || isRemoving;
+
+        [editPollPregunta, editPollOp1, editPollOp2, editPollOp3, editPollOp4, editPollDuration].forEach(function (input) {
+            if (input) input.disabled = disabled;
+        });
+
+        if (editPollExtras) {
+            editPollExtras.querySelectorAll('.js-edit-encuesta-opcion-extra').forEach(function (input) {
+                input.disabled = disabled;
+            });
+        }
+    }
+
+    function addExtraPollOption(container, prefix) {
+        if (!container) return;
+        const currentExtras = container.querySelectorAll('.js-encuesta-opcion-extra').length;
+        const optionNumber = 5 + currentExtras;
+        const row = document.createElement('div');
+        row.className = 'input-group mb-2';
+        row.innerHTML = `
+            <input type="text" class="form-control js-encuesta-opcion-extra" data-prefix="${prefix}" placeholder="${prefix === 'encuesta2' ? 'Pregunta 2 - Opción' : 'Opción'} ${optionNumber} (opcional)">
+            <button type="button" class="btn btn-light border js-remove-opcion-extra" aria-label="Quitar opción">Quitar</button>
+        `;
+        container.appendChild(row);
+    }
+
+    function appendDynamicPollOptionsToFormData(fd) {
+        const appendOptions = function (container, prefix) {
+            if (!container) return;
+            let optionNumber = 5;
+            container.querySelectorAll('.js-encuesta-opcion-extra').forEach(function (input) {
+                const value = (input.value || '').trim();
+                if (!value) return;
+                fd.append(`${prefix}_opcion${optionNumber}`, value);
+                optionNumber += 1;
+            });
+        };
+        appendOptions(encuestaExtraWrap, 'encuesta');
+        appendOptions(encuesta2ExtraWrap, 'encuesta2');
+    }
+
+    if (btnToggleEncuesta && encuestaWrap) {
+        btnToggleEncuesta.addEventListener('click', function () {
+            const isOpen = encuestaWrap.style.display !== 'none';
+            encuestaWrap.style.display = isOpen ? 'none' : 'block';
+        });
+    }
+
+    if (btnToggleEncuesta2 && encuesta2Wrap) {
+        btnToggleEncuesta2.addEventListener('click', function () {
+            const isOpen = encuesta2Wrap.style.display !== 'none';
+            encuesta2Wrap.style.display = isOpen ? 'none' : 'block';
+            btnToggleEncuesta2.textContent = isOpen ? '+ Agregar otra pregunta' : '- Quitar pregunta 2';
+        });
+    }
+
+    if (btnAddOpcionExtra && encuestaExtraWrap) {
+        btnAddOpcionExtra.addEventListener('click', function () {
+            addExtraPollOption(encuestaExtraWrap, 'encuesta');
+        });
+    }
+
+    if (btnAddOpcion2Extra && encuesta2ExtraWrap) {
+        btnAddOpcion2Extra.addEventListener('click', function () {
+            addExtraPollOption(encuesta2ExtraWrap, 'encuesta2');
+        });
+    }
+
+    if (encuestaWrap) {
+        encuestaWrap.addEventListener('click', function (e) {
+            const btnRemove = e.target.closest('.js-remove-opcion-extra');
+            if (!btnRemove) return;
+            const row = btnRemove.closest('.input-group');
+            if (row) row.remove();
+        });
+    }
+
+    // Preview de imagen seleccionada (útil en Android)
+    if (imgInput) {
+        imgInput.addEventListener('change', function () {
+            const file = this.files[0];
+            if (!file) return;
+            if (nombreImg) nombreImg.textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                previewImg.src = e.target.result;
+                previewWrap.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Botón de quitar imagen
+    const btnQuitarImg = document.getElementById('btn-quitar-imagen');
+    if (btnQuitarImg) {
+        btnQuitarImg.addEventListener('click', function () {
+            if (imgInput) imgInput.value = '';
+            if (nombreImg) nombreImg.textContent = '';
+            previewWrap.style.display = 'none';
+            previewImg.src = '';
+        });
+    }
+
+    if (formPub) {
+        formPub.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (pubError) { pubError.textContent = ''; pubError.style.display = 'none'; }
+            if (btnPublicar) btnPublicar.disabled = true;
+            const fd = new FormData(formPub);
+            appendDynamicPollOptionsToFormData(fd);
+            fetch(formPub.action, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                body: fd,
+            })
+            .then(async (r) => {
+                const ct = (r.headers.get('content-type') || '').toLowerCase();
+                if (ct.includes('application/json')) {
+                    return r.json();
+                }
+                // Algunos middlewares/respuestas devuelven HTML aun con éxito.
+                const txt = await r.text();
+                try {
+                    return JSON.parse(txt);
+                } catch (e) {
+                    return { ok: r.ok || r.redirected };
+                }
+            })
+            .then(data => {
+                if (btnPublicar) btnPublicar.disabled = false;
+                if (data.ok) {
+                    textarea.value = '';
+                    if (imgInput) imgInput.value = '';
+                    if (nombreImg) nombreImg.textContent = '';
+                    previewWrap.style.display = 'none';
+                    previewImg.src = '';
+                    if (encuestaWrap) {
+                        encuestaWrap.style.display = 'none';
+                        encuestaWrap.querySelectorAll('input').forEach(i => i.value = '');
+                    }
+                    if (encuesta2Wrap) {
+                        encuesta2Wrap.style.display = 'none';
+                    }
+                    if (btnToggleEncuesta2) {
+                        btnToggleEncuesta2.textContent = '+ Agregar otra pregunta';
+                    }
+                    if (encuestaExtraWrap) {
+                        encuestaExtraWrap.innerHTML = '';
+                    }
+                    if (encuesta2ExtraWrap) {
+                        encuesta2ExtraWrap.innerHTML = '';
+                    }
+                    if (crearPubModalEl && window.bootstrap) {
+                        const modalInstance = getModalInstance(crearPubModalEl);
+                        modalInstance.hide();
+                    }
+                } else {
+                    // Mostrar primer error al usuario
+                    let msg = 'Error al publicar.';
+                    if (data.errors) {
+                        const firstField = Object.values(data.errors)[0];
+                        if (firstField && firstField[0]) msg = firstField[0].message;
+                    }
+                    if (pubError) { pubError.textContent = msg; pubError.style.display = 'inline'; }
+                }
+            })
+            .catch(() => {
+                if (btnPublicar) btnPublicar.disabled = false;
+                if (pubError) { pubError.textContent = 'Error de conexión. Intenta de nuevo.'; pubError.style.display = 'inline'; }
+            });
+        });
+    }
+
+    /* ── Likes (delegación unificada en el feed) ───── */
+    feedCol.addEventListener('click', function (e) {
+        const btnVote = e.target.closest('.btn-votar-encuesta');
+        if (!btnVote) return;
+        const pubId = btnVote.dataset.pubId;
+        const opcion = btnVote.dataset.opcion;
+        if (!pubId || !opcion) return;
+
+        const fd = new FormData();
+        fd.append('opcion', opcion);
+        fetch(`/publicaciones/${pubId}/encuesta/votar/`, {
+            method: 'POST',
+            body: fd,
+            headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.ok) return;
+            renderPollResults(pubId, data.resultados, data.total_votos, data.votos_detalle, data.mi_voto);
+        });
+    });
+
+    feedCol.addEventListener('click', function (e) {
+        const btn = e.target.closest('.btn-like, .btn-like-album');
+        if (!btn) return;
+        const url = btn.dataset.url;
+        if (!url) return;
+        fetch(url, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' },
+        })
+        .then(r => r.json())
+        .then(data => {
+            const icon = btn.querySelector('i');
+            icon.classList.toggle('text-danger', data.liked);
+            icon.classList.toggle('text-grey-400', !data.liked);
+            btn.dataset.liked = data.liked ? 'true' : 'false';
+            // El contador y la burbuja se actualizan vía WS (like_update)
+            // pero actualizamos localmente inmediato para respuesta rápida
+            const tipo = btn.dataset.tipo;
+            const id   = btn.dataset.id;
+            if (tipo && id) {
+                const span = document.querySelector(
+                    tipo === 'publicacion'
+                        ? `.like-count-pub-${id}`
+                        : `.like-count-album-${id}`
+                );
+                if (span) span.textContent = data.total;
+            }
+        });
+    });
+
+    /* ── Eliminar publicación (delegación) ───────────── */
+    feedCol.addEventListener('click', function (e) {
+        const btn = e.target.closest('.btn-delete-pub');
+        if (!btn) return;
+        pendingDelete.pubId = btn.dataset.pub;
+        pendingDelete.url = btn.dataset.url || `/publicaciones/${pendingDelete.pubId}/eliminar/`;
+        const deleteModal = getModalInstance(confirmDeletePubModalEl);
+        if (deleteModal) deleteModal.show();
+    });
+
+    if (confirmDeletePubBtn) {
+        confirmDeletePubBtn.addEventListener('click', function () {
+            if (!pendingDelete.pubId || !pendingDelete.url) return;
+            const fd = new FormData();
+            fd.append('csrfmiddlewaretoken', CSRF || '');
+            fetch(pendingDelete.url, {
+                method: 'POST',
+                body: fd,
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': CSRF, 'Accept': 'application/json' },
+            })
+            .then(async (r) => {
+                const ct = (r.headers.get('content-type') || '').toLowerCase();
+                if (ct.includes('application/json')) {
+                    let data = {};
+                    try {
+                        data = await r.json();
+                    } catch (_) {
+                        data = {};
+                    }
+                    if (!r.ok && !data.error) {
+                        data.error = `Error HTTP ${r.status} al eliminar.`;
+                    }
+                    data.ok = !!data.ok && r.ok;
+                    return data;
+                }
+                const txt = await r.text();
+                const compact = (txt || '').replace(/\s+/g, ' ').trim();
+                return {
+                    ok: r.ok,
+                    error: r.ok ? '' : (compact.slice(0, 180) || `Error HTTP ${r.status} al eliminar.`),
+                };
+            })
+            .then(data => {
+                const deleteModal = getModalInstance(confirmDeletePubModalEl);
+                if (deleteModal) deleteModal.hide();
+                if (data.ok) {
+                    const card = document.getElementById(`pub-${pendingDelete.pubId}`);
+                    if (card) removePublicationCard(card);
+                    showActionMessage('Publicación eliminada correctamente.');
+                    pendingDelete = { pubId: null, url: null };
+                    return;
+                }
+                showActionMessage(data.error || 'No se pudo eliminar la publicación.');
+            })
+            .catch(err => {
+                console.error('Error eliminando publicación:', err);
+                const deleteModal = getModalInstance(confirmDeletePubModalEl);
+                if (deleteModal) deleteModal.hide();
+                showActionMessage('Error al eliminar la publicación.');
+            });
+        });
+    }
+
+    function renderEditPollExtras(opciones) {
+        if (!editPollExtras) return;
+        editPollExtras.innerHTML = '';
+        (opciones || []).slice(4).forEach(function (opt, idx) {
+            const optionNumber = 5 + idx;
+            const row = document.createElement('div');
+            row.className = 'input-group mb-2';
+            row.innerHTML = `
+                <input type="text" class="form-control js-edit-encuesta-opcion-extra" data-option-number="${optionNumber}" value="${esc(opt)}" placeholder="Opción ${optionNumber}">
+            `;
+            editPollExtras.appendChild(row);
+        });
+    }
+
+    function updateCardPoll(pubId, encuesta) {
+        const card = document.getElementById(`pub-${pubId}`);
+        if (!card) return;
+
+        const pollWrap = card.querySelector('.pub-poll');
+        if (!encuesta || !encuesta.tiene) {
+            if (pollWrap) {
+                pollWrap.classList.add('poll-exit-animation');
+                setTimeout(function () {
+                    pollWrap.remove();
+                }, 260);
+            }
+            card.dataset.pubEncuestaPregunta = '';
+            card.dataset.pubEncuestaOpciones = '[]';
+            return;
+        }
+
+        if (!pollWrap) return;
+
+        const title = pollWrap.querySelector('.poll-title');
+        if (title) title.textContent = encuesta.pregunta || '';
+
+        const actions = pollWrap.querySelector('.poll-actions');
+        if (actions) {
+            actions.innerHTML = (encuesta.opciones || []).map(function (op, idx) {
+                return `<button class="btn btn-light border btn-votar-encuesta" data-pub-id="${pubId}" data-opcion="${idx + 1}">${esc(op)}</button>`;
+            }).join('');
+        }
+
+        renderPollResults(pubId, encuesta.resultados || [], encuesta.total_votos || 0, [], null);
+    }
+
+    function updateCardImage(pubId, imageUrl) {
+        const card = document.getElementById(`pub-${pubId}`);
+        if (!card) return;
+
+        const existingWrap = card.querySelector('.pub-image-wrap');
+        if (!imageUrl) {
+            if (existingWrap) existingWrap.remove();
+            card.dataset.pubImagen = '';
+            return;
+        }
+
+        if (existingWrap) {
+            const img = existingWrap.querySelector('img');
+            if (img) img.src = imageUrl;
+            card.dataset.pubImagen = imageUrl;
+            return;
+        }
+
+        const imageWrap = document.createElement('div');
+        imageWrap.className = 'card-body p-0 mt-3 rounded-xxl overflow-hidden pub-image-wrap';
+        imageWrap.innerHTML = `<img src="${imageUrl}" class="w-100 rounded-xxl" alt="imagen" style="max-height:400px;object-fit:cover;">`;
+
+        const contentBlock = card.querySelector('.card-body.p-0.mt-3');
+        if (contentBlock) {
+            contentBlock.insertAdjacentElement('afterend', imageWrap);
+        } else {
+            card.appendChild(imageWrap);
+        }
+        card.dataset.pubImagen = imageUrl;
+    }
+
+    if (editPubImageInput) {
+        editPubImageInput.addEventListener('change', function () {
+            const file = this.files && this.files[0] ? this.files[0] : null;
+            if (!file || !editPubImagePreview || !editPubImagePreviewWrap) return;
+            const reader = new FileReader();
+            reader.onload = function (ev) {
+                editPubImagePreview.src = ev.target.result;
+                editPubImagePreviewWrap.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+            if (editPubImageRemove) editPubImageRemove.checked = false;
+        });
+    }
+
+    if (editPubImageRemove) {
+        editPubImageRemove.addEventListener('change', function () {
+            if (!this.checked) return;
+            if (editPubImageInput) editPubImageInput.value = '';
+            if (editPubImagePreviewWrap) editPubImagePreviewWrap.style.display = 'none';
+            if (editPubImagePreview) editPubImagePreview.src = '';
+        });
+    }
+
+    if (editPollRemove) {
+        editPollRemove.addEventListener('change', syncEditPollState);
+    }
+
+    /* ── Editar publicación (delegación + modal) ─────── */
+    feedCol.addEventListener('click', function (e) {
+        const btn = e.target.closest('.btn-edit-pub');
+        if (!btn) return;
+
+        const pubId = btn.dataset.pub;
+        const url = btn.dataset.url || `/publicaciones/${pubId}/editar/`;
+
+        if (editPubError) {
+            editPubError.textContent = '';
+            editPubError.style.display = 'none';
+        }
+
+        fetch(url, {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.ok) {
+                showActionMessage(data.error || 'No se pudo cargar la publicación para editar.');
+                return;
+            }
+
+            if (editPubIdInput) editPubIdInput.value = String(data.pub_id || '');
+            if (editPubContenidoInput) editPubContenidoInput.value = data.contenido || '';
+
+            if (editPubImageInput) editPubImageInput.value = '';
+            if (editPubImageRemove) editPubImageRemove.checked = false;
+            if (editPubImagePreview && editPubImagePreviewWrap) {
+                if (data.imagen) {
+                    editPubImagePreview.src = data.imagen;
+                    editPubImagePreviewWrap.style.display = 'block';
+                } else {
+                    editPubImagePreview.src = '';
+                    editPubImagePreviewWrap.style.display = 'none';
+                }
+            }
+
+            const encuesta = data.encuesta || {};
+            const opciones = Array.isArray(encuesta.opciones) ? encuesta.opciones : [];
+            const tieneEncuesta = !!encuesta.tiene;
+
+            if (editPollWrap) editPollWrap.style.display = tieneEncuesta ? 'block' : 'none';
+            if (editPollPregunta) editPollPregunta.value = encuesta.pregunta || '';
+            if (editPollOp1) editPollOp1.value = opciones[0] || '';
+            if (editPollOp2) editPollOp2.value = opciones[1] || '';
+            if (editPollOp3) editPollOp3.value = opciones[2] || '';
+            if (editPollOp4) editPollOp4.value = opciones[3] || '';
+            if (editPollDuration) editPollDuration.value = String(encuesta.encuesta_duracion_min || 1440);
+            if (editPollRemove) editPollRemove.checked = false;
+            renderEditPollExtras(opciones);
+            syncEditPollState();
+
+            const editModal = getModalInstance(editPubModalEl);
+            if (editModal) editModal.show();
+        })
+        .catch(err => {
+            console.error('Error cargando publicación para editar:', err);
+            showActionMessage('Error al cargar la publicación para editar.');
+        });
+    });
+
+    if (formEditPub) {
+        formEditPub.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const pubId = editPubIdInput ? editPubIdInput.value : '';
+            if (!pubId) return;
+
+            const fd = new FormData();
+            fd.append('contenido', (editPubContenidoInput ? editPubContenidoInput.value : '').trim());
+
+            if (editPollWrap && editPollWrap.style.display !== 'none') {
+                const removingPoll = !!(editPollRemove && editPollRemove.checked);
+                if (removingPoll) {
+                    fd.append('remove_encuesta', '1');
+                } else {
+                    fd.append('encuesta_pregunta', (editPollPregunta ? editPollPregunta.value : '').trim());
+                    fd.append('encuesta_opcion1', (editPollOp1 ? editPollOp1.value : '').trim());
+                    fd.append('encuesta_opcion2', (editPollOp2 ? editPollOp2.value : '').trim());
+                    fd.append('encuesta_opcion3', (editPollOp3 ? editPollOp3.value : '').trim());
+                    fd.append('encuesta_opcion4', (editPollOp4 ? editPollOp4.value : '').trim());
+                    fd.append('encuesta_duracion_min', (editPollDuration ? editPollDuration.value : '1440'));
+                    if (editPollExtras) {
+                        editPollExtras.querySelectorAll('.js-edit-encuesta-opcion-extra').forEach(function (input) {
+                            const value = (input.value || '').trim();
+                            const number = input.dataset.optionNumber;
+                            if (value && number) {
+                                fd.append(`encuesta_opcion${number}`, value);
+                            }
+                        });
+                    }
+                }
+            }
+
+            if (editPubImageInput && editPubImageInput.files && editPubImageInput.files[0]) {
+                fd.append('imagen', editPubImageInput.files[0]);
+            }
+            if (editPubImageRemove && editPubImageRemove.checked) {
+                fd.append('eliminar_imagen', '1');
+            }
+
+            fetch(`/publicaciones/${pubId}/editar/`, {
+                method: 'POST',
+                body: fd,
+                credentials: 'same-origin',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': CSRF, 'Accept': 'application/json' },
+            })
+            .then(async (r) => {
+                const ct = (r.headers.get('content-type') || '').toLowerCase();
+                if (ct.includes('application/json')) return r.json();
+                const txt = await r.text();
+                return { ok: r.ok, error: txt.slice(0, 180) };
+            })
+            .then(data => {
+                if (!data.ok) {
+                    if (editPubError) {
+                        editPubError.textContent = data.error || 'No se pudo actualizar la publicación.';
+                        editPubError.style.display = 'inline';
+                    }
+                    return;
+                }
+
+                const card = document.getElementById(`pub-${pubId}`);
+                if (card) {
+                    const pNode = card.querySelector('.card-body.p-0.mt-3 p');
+                    if (pNode) pNode.innerHTML = nl2br(esc(data.contenido || ''));
+                    card.dataset.pubContenido = data.contenido || '';
+                    updateCardImage(pubId, data.imagen || '');
+                    updateCardPoll(pubId, data.encuesta || { tiene: false });
+                    card.dataset.pubEncuestaPregunta = (data.encuesta && data.encuesta.tiene) ? (data.encuesta.pregunta || '') : '';
+                    card.dataset.pubEncuestaOpciones = (data.encuesta && data.encuesta.tiene)
+                        ? JSON.stringify(data.encuesta.opciones || [])
+                        : '[]';
+                }
+
+                const editModal = getModalInstance(editPubModalEl);
+                if (editModal) editModal.hide();
+                showActionMessage('Publicación actualizada correctamente.');
+            })
+            .catch(err => {
+                console.error('Error editando publicación:', err);
+                if (editPubError) {
+                    editPubError.textContent = 'Error al actualizar la publicación.';
+                    editPubError.style.display = 'inline';
+                }
+            });
+        });
+    }
+
+    /* ── Comentar publicación (delegación + realtime) ── */
+    feedCol.addEventListener('submit', function (e) {
+        const form = e.target.closest('.form-comentar-pub');
+        if (!form) return;
+        e.preventDefault();
+        const input = form.querySelector('input[name="contenido"]');
+        const txt = (input ? input.value : '').trim();
+        if (!txt) return;
+        const pubId = form.dataset.pubId;
+        const fd = new FormData();
+        fd.append('contenido', txt);
+        fetch(form.dataset.url, {
+            method: 'POST',
+            body: fd,
+            headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+        }).then(r => r.json()).then(data => {
+            if (data.ok && input) {
+                input.value = '';
+                // scroll al fondo de los comentarios de esa pub
+                const list = document.querySelector('.pub-comments-' + pubId);
+                if (list) setTimeout(() => { list.scrollTop = list.scrollHeight; }, 50);
+            }
+        });
+    });
+
+    /* ── Modal de Chat para Publicaciones ──────────────────────────────── */
+    const pubChatModal = document.getElementById('publicacionChatModal');
+    const pubChatForm = document.getElementById('pubChatForm');
+    let currentPubId = null;
+    let pubModalInstance = null;
+
+    // Detectar clicks en las publicaciones
+    document.addEventListener('click', function(e) {
+        // No abrir modal si se clica en un elemento interactivo
+        if (e.target.closest('.btn-like, .btn-like-album, .btn-delete-pub, .form-comentar-pub, button, input, a, select, textarea')) return;
+        const pubCard = e.target.closest('.pub-card');
+        if (!pubCard) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        currentPubId = pubCard.dataset.pubId;
+        const autorNombre = pubCard.dataset.pubAutorNombre;
+        const autorFoto = pubCard.dataset.pubFoto;
+        const creado = pubCard.dataset.pubCreado;
+        const contenido = pubCard.dataset.pubContenido;
+
+        console.log('Abriendo modal para publicación:', currentPubId);
+
+        // Llenar header del modal
+        document.getElementById('pubChatAutorFoto').src = autorFoto || '/static/sociala/images/user-12.png';
+        document.getElementById('pubChatAutorNombre').textContent = autorNombre;
+        document.getElementById('pubChatFecha').textContent = creado;
+        document.getElementById('pubChatContenido').innerHTML = '<p class="font-xssss text-grey-900">' + (contenido || '') + '</p>';
+
+        // Limpiar comentarios previos
+        document.getElementById('pubChatComentarios').innerHTML = '<p class="font-xssss text-grey-500">Cargando comentarios...</p>';
+
+        // Cargar comentarios
+        fetch('/publicaciones/' + currentPubId + '/comentarios/', {
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => {
+            console.log('Respuesta de comentarios:', r.status);
+            return r.json();
+        })
+        .then(data => {
+            console.log('Datos recibidos:', data);
+            document.getElementById('pubChatComentarios').innerHTML = '';
+            if (data.comentarios && data.comentarios.length > 0) {
+                data.comentarios.forEach(c => renderPubChatComment(c));
+            } else {
+                document.getElementById('pubChatComentarios').innerHTML = '<p class="font-xssss text-grey-500">Sin comentarios aún</p>';
+            }
+            scrollPubChatToBottom();
+        })
+        .catch(err => {
+            console.error('Error cargando comentarios:', err);
+            document.getElementById('pubChatComentarios').innerHTML = '<p class="font-xssss text-grey-500">Error al cargar comentarios</p>';
+        });
+
+        // Abrir modal
+        if (!pubModalInstance) {
+            pubModalInstance = new bootstrap.Modal(pubChatModal, {
+                backdrop: 'static',
+                keyboard: false
+            });
+        }
+        pubModalInstance.show();
+    });
+
+    function renderPubChatComment(comment) {
+        const comentariosDiv = document.getElementById('pubChatComentarios');
+        const div = document.createElement('div');
+        div.className = 'pub-chat-comment';
+        const foto = comment.autor_foto || '/static/sociala/images/user-12.png';
+        const autor = (comment.autor_nombre || comment.autor_username || 'Usuario');
+        const contenido = (comment.contenido || '');
+        const hora = (comment.creado || '');
+        
+        div.innerHTML = `
+            <img src="${foto}" class="pub-chat-avatar" alt="avatar" onerror="this.style.display='block'; this.style.background='#ccc';">
+            <div class="pub-chat-body">
+                <div class="pub-chat-header">
+                    <span class="pub-chat-author">${esc(autor)}</span>
+                    <span class="pub-chat-time">${esc(hora)}</span>
+                </div>
+                <div class="pub-chat-text">${esc(contenido)}</div>
+            </div>
+        `;
+        comentariosDiv.appendChild(div);
+    }
+
+    function scrollPubChatToBottom() {
+        const chatDiv = document.getElementById('pubChatComentarios');
+        setTimeout(() => {
+            if (chatDiv) chatDiv.scrollTop = chatDiv.scrollHeight;
+        }, 50);
+    }
+
+    // Enviar comentario desde el modal
+    pubChatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!currentPubId) return;
+
+        const input = document.getElementById('pubChatInput');
+        const txt = (input.value || '').trim();
+        if (!txt) return;
+
+        const fd = new FormData();
+        fd.append('contenido', txt);
+        
+        fetch('/publicaciones/' + currentPubId + '/comentar/', {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin',
+            headers: { 'X-CSRFToken': CSRF, 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            console.log('Comentario enviado:', data);
+            input.value = '';
+            if (data.ok) {
+                scrollPubChatToBottom();
+            }
+        })
+        .catch(err => console.error('Error enviando comentario:', err));
+    });
+
+    // Event listener para comentarios nuevos vía WebSocket
+    window.addEventListener('ws_global', function(e) {
+        const d = e.detail || {};
+        if (d.event === 'publicacion_comentario_nuevo' && currentPubId && d.pub_id == currentPubId) {
+            console.log('Comentario nuevo recibido:', d);
+            renderPubChatComment({
+                autor_foto: d.autor_foto || '/static/sociala/images/user-12.png',
+                autor_nombre: d.autor_nombre,
+                autor_username: d.autor_username,
+                contenido: d.contenido,
+                creado: d.creado
+            });
+            scrollPubChatToBottom();
+        }
+    });
+
 })();
+});
 </script>
+
+<div class="modal fade" id="confirmDeletePubModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+        <div class="modal-content border-0 rounded-4">
+            <div class="modal-header">
+                <h5 class="fw-700 mb-0">Eliminar publicación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0 text-grey-700">¿Seguro que deseas eliminar esta noticia? Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="confirmDeletePubBtn">Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editPublicacionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:640px;">
+        <div class="modal-content border-0 rounded-4 overflow-hidden">
+            <div class="modal-header">
+                <h5 class="fw-700 mb-0">Editar publicación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="form-edit-publicacion">
+                <div class="modal-body">
+                    <input type="hidden" id="edit_pub_id">
+                    <textarea id="edit_pub_contenido" class="form-control rounded-xxl border-0 fw-500 font-xss bg-greylight" rows="4" placeholder="¿Qué estás pensando?"></textarea>
+
+                    <div class="mt-3">
+                        <div id="edit_pub_img_preview_wrap" class="mb-2" style="display:none;">
+                            <img id="edit_pub_img_preview" src="" class="rounded-3" style="max-height:220px;max-width:100%;object-fit:cover;">
+                        </div>
+                        <label class="btn btn-light btn-sm d-inline-flex align-items-center gap-1 mb-2">
+                            <i class="feather-image text-success"></i> Cambiar imagen
+                            <input type="file" id="edit_pub_imagen" accept="image/*" style="display:none;">
+                        </label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="edit_pub_eliminar_imagen">
+                            <label class="form-check-label font-xss text-grey-600" for="edit_pub_eliminar_imagen">Quitar imagen actual</label>
+                        </div>
+                    </div>
+
+                    <div id="edit-pub-encuesta-wrap" class="mt-3" style="display:none;">
+                        <div class="font-xss text-grey-600 fw-600 mb-2">Encuesta</div>
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="font-xss text-grey-600">Duración:</span>
+                            <select id="edit_encuesta_duracion_min" class="form-control form-control-sm" style="max-width:180px;">
+                                <option value="30">30 minutos</option>
+                                <option value="60">1 hora</option>
+                                <option value="180">3 horas</option>
+                                <option value="720">12 horas</option>
+                                <option value="1440" selected>24 horas</option>
+                                <option value="4320">3 días</option>
+                            </select>
+                        </div>
+                        <input type="text" id="edit_encuesta_pregunta" class="form-control mb-2" placeholder="Pregunta de la encuesta...">
+                        <input type="text" id="edit_encuesta_opcion1" class="form-control mb-2" placeholder="Opción 1">
+                        <input type="text" id="edit_encuesta_opcion2" class="form-control mb-2" placeholder="Opción 2">
+                        <input type="text" id="edit_encuesta_opcion3" class="form-control mb-2" placeholder="Opción 3 (opcional)">
+                        <input type="text" id="edit_encuesta_opcion4" class="form-control mb-2" placeholder="Opción 4 (opcional)">
+                        <div id="edit-encuesta-opciones-extra"></div>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="edit_encuesta_remove">
+                            <label class="form-check-label font-xss text-danger" for="edit_encuesta_remove">Quitar encuesta completa</label>
+                        </div>
+                    </div>
+
+                    <span id="edit-pub-error" class="font-xss text-danger" style="display:none;"></span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn bg-current text-white">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1090;">
+    <div id="actionToast" class="toast align-items-center border-0 text-white bg-dark" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="2500">
+        <div class="d-flex align-items-center">
+            <div id="actionToastBody" class="toast-body fw-600 font-xss"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Chat para Publicaciones -->
+<div class="modal fade" id="publicacionChatModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:500px;">
+        <div class="modal-content border-0">
+            <div class="modal-header border-bottom bg-light">
+                <div class="d-flex align-items-center flex-grow-1">
+                    <img id="pubChatAutorFoto" src="/static/sociala/images/user-12.png" class="rounded-circle me-2" style="width:40px;height:40px;object-fit:cover;">
+                    <div>
+                        <h6 class="mb-0 fw-700" id="pubChatAutorNombre"></h6>
+                        <small class="text-grey-500" id="pubChatFecha"></small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height:60vh;overflow-y:auto;">
+                <div id="pubChatContenido" class="mb-3"></div>
+                <div id="pubChatComentarios" style="border-top:1px solid #e9edf3;padding-top:12px;margin-top:12px;"></div>
+            </div>
+            <div class="modal-footer border-top bg-light">
+                <form id="pubChatForm" class="d-flex w-100 gap-2">
+                    <input type="text" id="pubChatInput" class="form-control" placeholder="Comenta...">
+                    <button type="submit" class="btn btn-primary btn-sm">Enviar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
-@keyframes fadeInDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes pollExitFade {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        max-height: 420px;
+        margin-top: 1rem;
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.98);
+        max-height: 0;
+        margin-top: 0;
+    }
+}
+
+.poll-exit-animation {
+    overflow: hidden;
+    animation: pollExitFade 0.26s ease forwards;
+}
+
+.publication-exit-animation {
+    animation: fadeOutUp 0.3s ease forwards;
+}
+
+/* Modo oscuro */
+body.theme-dark #publicacionChatModal.show,
+body.theme-dark #publicacionChatModal.pub-chat-force-open {
+    background: rgba(4, 8, 15, 0.74) !important;
+    backdrop-filter: blur(1px);
+    display: block !important;
+    opacity: 1 !important;
+}
+body.theme-dark #publicacionChatModal .modal-content {
+    background: #1a1a2e;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+body.theme-dark #publicacionChatModal .modal-header {
+    background: #0f1520;
+    border-bottom-color: rgba(255,255,255,0.1);
+    color: #fff;
+}
+body.theme-dark #publicacionChatModal .modal-body,
+body.theme-dark #publicacionChatModal .modal-footer {
+    background: #16213e;
+    color: #e0e0e0;
+}
+body.theme-dark #publicacionChatModal .form-control {
+    background: #0f3460;
+    border-color: rgba(255,255,255,0.15);
+    color: #fff;
+}
+body.theme-dark #publicacionChatModal .form-control::placeholder {
+    color: #8888aa;
+}
+
+/* Modo claro (light) */
+#publicacionChatModal.show,
+#publicacionChatModal.pub-chat-force-open {
+    background: rgba(0, 0, 0, 0.35) !important;
+    backdrop-filter: blur(1px);
+    display: block !important;
+    opacity: 1 !important;
+}
+#publicacionChatModal .modal-content {
+    background: #fff;
+    box-shadow: 0 20px 60px rgba(0,0,0,.15);
+}
+#publicacionChatModal .modal-header {
+    background: #f8f9fa;
+    border-bottom-color: #e0e0e0;
+}
+#publicacionChatModal .modal-body,
+#publicacionChatModal .modal-footer {
+    background: #ffffff;
+}
+#publicacionChatModal .form-control {
+    background: #f5f5f5;
+    border-color: #ddd;
+    color: #333;
+}
+#publicacionChatModal .form-control::placeholder {
+    color: #999;
+}
+.modal-backdrop.pub-chat-backdrop {
+    opacity: .35 !important;
+}
+#pubChatComentarios {
+    max-height: 350px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+.pub-chat-comment {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0f2f5;
+}
+.pub-chat-comment:last-child {
+    border-bottom: none;
+}
+.pub-chat-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #d0d0d0;
+    border: 2px solid #f0f2f5;
+    display: block;
+}
+.pub-chat-avatar:not([src]),
+.pub-chat-avatar[src=""] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+}
+.pub-chat-body {
+    flex: 1;
+    min-width: 0;
+}
+.pub-chat-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+.pub-chat-author {
+    font-weight: 600;
+    font-size: 12px;
+}
+.pub-chat-time {
+    font-size: 11px;
+    color: #65676b;
+}
+.pub-chat-text {
+    font-size: 12px;
+    color: #050505;
+    line-height: 1.4;
+}
+.pub-comment-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f2f5;
+}
+.pub-comment-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+.pub-comment-item > div {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    line-height: 1.3;
+}
+.poll-bar {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: #eef2f7;
+    overflow: hidden;
+}
+.poll-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #1e74fd, #34c759);
+}
+.btn-votar-encuesta.active {
+    border-color: #1e74fd !important;
+    background: #eaf2ff !important;
+    color: #0f3f8f !important;
+    font-weight: 700;
+}
+.poll-voter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.poll-voter-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+</style>
+
+<style>
+@keyframes fadeInDown  { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeOutUp   { from { opacity:1; transform:translateY(0); }     to { opacity:0; transform:translateY(-20px); } }
 </style>
 {% endblock %}

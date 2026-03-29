@@ -13,7 +13,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-fallback-k
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1'] if DEBUG else os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',')
+ALLOWED_HOSTS = ['*'] if DEBUG else os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',')
 
 INSTALLED_APPS = [
     'daphne',
@@ -44,7 +44,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
-    'Usuario.middleware.SingleSessionMiddleware',
+    # SingleSessionMiddleware desactivado: permite múltiples dispositivos simultáneos
+    # 'Usuario.middleware.SingleSessionMiddleware',
 ]
 
 ROOT_URLCONF = 'social_music.urls'
@@ -59,6 +60,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'Usuario.context_processors.notificaciones_ctx',
             ],
         },
     },
@@ -145,7 +147,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = 'es-es'
-TIME_ZONE = 'America/Bogota'
+TIME_ZONE = 'America/Guayaquil'
 USE_I18N = True
 USE_TZ = True
 
