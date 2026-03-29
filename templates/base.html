@@ -113,15 +113,17 @@
 
             
 
-            <form action="#" class="float-left header-search">
+            <form action="{% url 'explorar_usuarios' %}" method="get" class="float-left header-search position-relative">
 
                 <div class="form-group mb-0 icon-input">
 
                     <i class="feather-search font-sm text-grey-400"></i>
 
-                    <input type="text" placeholder="Start typing to search.." class="bg-grey border-0 lh-32 pt-2 pb-2 ps-5 pe-3 font-xssss fw-500 rounded-xl w350 theme-dark-bg">
+                    <input type="text" name="q" id="header-search-input" autocomplete="off" placeholder="Buscar usuarios..." class="bg-grey border-0 lh-32 pt-2 pb-2 ps-5 pe-3 font-xssss fw-500 rounded-xl w350 theme-dark-bg">
 
                 </div>
+
+                <div id="search-results-dropdown" class="position-absolute bg-white rounded-3 shadow-lg w-100 d-none" style="top:100%;left:0;z-index:1060;max-height:320px;overflow-y:auto;"></div>
 
             </form>
 
@@ -648,11 +650,11 @@
 
         <div class="app-header-search">
 
-            <form class="search-form">
+            <form class="search-form" action="{% url 'explorar_usuarios' %}" method="get">
 
                 <div class="form-group searchbox mb-0 border-0 p-1">
 
-                    <input type="text" class="form-control border-0" placeholder="Search...">
+                    <input type="text" name="q" class="form-control border-0" placeholder="Buscar usuarios...">
 
                     <i class="input-icon">
 
@@ -1521,6 +1523,56 @@
     </script>
     {% endif %}
     {% block extra_js %}{% endblock %}
+
+    <!-- Autocompletado barra de búsqueda -->
+    {% if user.is_authenticated %}
+    <script>
+    (function(){
+        var input = document.getElementById('header-search-input');
+        var dropdown = document.getElementById('search-results-dropdown');
+        if (!input || !dropdown) return;
+        var timer = null;
+        var defaultImg = "{% static 'sociala/images/user-12.png' %}";
+
+        input.addEventListener('input', function(){
+            clearTimeout(timer);
+            var q = input.value.trim();
+            if (q.length < 1) { dropdown.classList.add('d-none'); return; }
+            timer = setTimeout(function(){
+                fetch("{% url 'buscar_usuarios_api' %}?q=" + encodeURIComponent(q))
+                .then(function(r){ return r.json(); })
+                .then(function(data){
+                    if (!data.usuarios || !data.usuarios.length) {
+                        dropdown.innerHTML = '<div class="p-3 text-center font-xsss text-grey-500">Sin resultados</div>';
+                        dropdown.classList.remove('d-none');
+                        return;
+                    }
+                    var html = '';
+                    data.usuarios.forEach(function(u){
+                        var foto = u.foto || defaultImg;
+                        html += '<a href="/usuario/' + u.username + '/" class="d-flex align-items-center gap-2 p-2 text-decoration-none border-bottom" style="color:inherit;">'
+                            + '<img src="' + foto + '" class="rounded-circle" style="width:36px;height:36px;object-fit:cover;" onerror="this.src=\'' + defaultImg + '\'">'
+                            + '<div><div class="fw-600 font-xsss">' + u.nombre + '</div><div class="font-xsss text-grey-500">@' + u.username + '</div></div>'
+                            + '</a>';
+                    });
+                    html += '<a href="/explorar/?q=' + encodeURIComponent(q) + '" class="d-block text-center p-2 font-xsss fw-600 text-primary">Ver todos los resultados</a>';
+                    dropdown.innerHTML = html;
+                    dropdown.classList.remove('d-none');
+                });
+            }, 300);
+        });
+
+        input.addEventListener('focus', function(){
+            if (input.value.trim().length >= 1 && dropdown.innerHTML) dropdown.classList.remove('d-none');
+        });
+
+        document.addEventListener('click', function(e){
+            if (!e.target.closest('.header-search')) dropdown.classList.add('d-none');
+        });
+    })();
+    </script>
+    {% endif %}
+
     <script src="{% static 'sociala/js/plugin.js' %}"></script>
 
     <script src="{% static 'sociala/js/lightbox.js' %}"></script>

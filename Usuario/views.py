@@ -645,6 +645,38 @@ def lista_seguidores(request, username):
 
 
 @login_required
+def explorar_usuarios(request):
+    """Página para explorar y buscar usuarios registrados."""
+    from django.db.models import Count, Q
+    mi_perfil, _ = Perfil.objects.get_or_create(usuario=request.user)
+    q = request.GET.get('q', '').strip()
+
+    usuarios_qs = User.objects.exclude(pk=request.user.pk).select_related('perfil')
+    if q:
+        usuarios_qs = usuarios_qs.filter(
+            Q(username__icontains=q) | Q(first_name__icontains=q) | Q(last_name__icontains=q)
+        )
+    usuarios_qs = usuarios_qs.annotate(
+        total_seguidores=Count('perfil__seguidores')
+    ).order_by('-total_seguidores')
+
+    perfiles = []
+    for u in usuarios_qs[:50]:
+        p, _ = Perfil.objects.get_or_create(usuario=u)
+        perfiles.append(p)
+
+    mis_seguidos = set(
+        Perfil.objects.filter(seguidores=mi_perfil).values_list('usuario__username', flat=True)
+    )
+
+    return render(request, 'explorar_usuarios.html', {
+        'perfiles': perfiles,
+        'mis_seguidos_usernames': mis_seguidos,
+        'query': q,
+    })
+
+
+@login_required
 def lista_siguiendo(request, username):
     usuario_obj = get_object_or_404(User, username=username)
     perfil_obj, _ = Perfil.objects.get_or_create(usuario=usuario_obj)

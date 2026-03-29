@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Explorar Usuarios - Veriffai{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card shadow-xss w-100 border-0 p-4 mb-3">
+            <div class="card-body p-0">
+                <h2 class="fw-700 mb-3 mt-0 font-md text-grey-900">
+                    <i class="feather-search text-current me-2"></i>Explorar Usuarios
+                </h2>
+                <form method="get" action="{% url 'explorar_usuarios' %}" class="d-flex gap-2">
+                    <div class="form-group mb-0 icon-input flex-grow-1">
+                        <i class="feather-search font-sm text-grey-400"></i>
+                        <input type="text" name="q" value="{{ query }}" placeholder="Buscar por nombre o usuario..."
+                               class="bg-grey border-0 lh-32 pt-2 pb-2 ps-5 pe-3 font-xssss fw-500 rounded-xl w-100 theme-dark-bg">
+                    </div>
+                    <button type="submit" class="btn btn-primary rounded-xl font-xssss fw-600 px-4">Buscar</button>
+                    {% if query %}
+                    <a href="{% url 'explorar_usuarios' %}" class="btn btn-light rounded-xl font-xssss fw-600 px-3">Limpiar</a>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        {% if query %}
+        <p class="font-xssss text-grey-500 mb-3 ps-2">Resultados para "<strong>{{ query }}</strong>" ({{ perfiles|length }})</p>
+        {% endif %}
+
+        <div class="row ps-2 pe-1">
+            {% for p in perfiles %}
+            <div class="col-md-4 col-sm-6 pe-2 ps-2 mb-3">
+                <div class="card d-block border-0 shadow-xss rounded-3 overflow-hidden">
+                    <!-- Portada mini -->
+                    <div style="height:80px;background:{% if p.portada %}url('{{ p.portada.url }}') center/cover{% else %}linear-gradient(135deg,#4f46e5,#7c3aed){% endif %};"></div>
+                    <div class="card-body d-flex flex-column align-items-center p-3" style="margin-top:-35px;">
+                        <a href="{% url 'pagina_usuario' p.usuario.username %}">
+                            <img src="{% if p.foto %}{{ p.foto.url }}{% elif p.get_foto %}{{ p.get_foto }}{% else %}{% static 'sociala/images/user-12.png' %}{% endif %}"
+                                 alt="{{ p.nombre_completo }}"
+                                 class="rounded-circle border border-white border-3 shadow-sm"
+                                 style="width:64px;height:64px;object-fit:cover;"
+                                 onerror="this.src='{% static 'sociala/images/user-12.png' %}'">
+                        </a>
+                        <a href="{% url 'pagina_usuario' p.usuario.username %}" class="text-decoration-none mt-2">
+                            <h4 class="fw-700 font-xsss text-grey-900 text-center mb-0">{{ p.nombre_completo }}</h4>
+                        </a>
+                        <span class="font-xsss text-grey-500">@{{ p.usuario.username }}</span>
+                        {% if p.ocupacion %}
+                        <span class="font-xsss text-grey-400">{{ p.ocupacion }}</span>
+                        {% endif %}
+                        <div class="d-flex gap-3 mt-2 font-xsss text-grey-500">
+                            <span><strong>{{ p.num_seguidores }}</strong> seguidores</span>
+                            <span><strong>{{ p.num_siguiendo }}</strong> siguiendo</span>
+                        </div>
+                        {% if p.usuario != user %}
+                        <a href="{% url 'toggle_seguir' p.usuario.username %}"
+                           class="btn btn-sm mt-2 w-100 {% if p.usuario.username in mis_seguidos_usernames %}btn-light text-grey-700{% else %}btn-primary text-white{% endif %}">
+                            {% if p.usuario.username in mis_seguidos_usernames %}
+                            <i class="feather-check me-1"></i>Siguiendo
+                            {% else %}
+                            <i class="feather-user-plus me-1"></i>Seguir
+                            {% endif %}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="card border-0 shadow-xss rounded-3 p-4 text-center">
+                    <i class="feather-users font-xl text-grey-400 mb-3 d-block"></i>
+                    <h4 class="fw-700 font-sm mb-2">
+                        {% if query %}No se encontraron usuarios{% else %}No hay usuarios registrados{% endif %}
+                    </h4>
+                    <p class="font-xssss text-grey-500 mb-0">
+                        {% if query %}Intenta con otro nombre o usuario.{% else %}Sé el primero en invitar amigos.{% endif %}
+                    </p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

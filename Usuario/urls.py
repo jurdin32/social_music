@@ -27,6 +27,7 @@ urlpatterns = [
     path('albumes/<int:album_id>/canciones/agregar/', views.agregar_cancion, name='agregar_cancion'),
     path('canciones/<int:cancion_id>/eliminar/', views.eliminar_cancion, name='eliminar_cancion'),
     path('usuario/<str:username>/seguir/', views.toggle_seguir, name='toggle_seguir'),
+    path('explorar/', views.explorar_usuarios, name='explorar_usuarios'),
     path('api/usuarios/', views.api_usuarios, name='api_usuarios'),
     # Publicaciones
     path('publicaciones/crear/', views.crear_publicacion, name='crear_publicacion'),
